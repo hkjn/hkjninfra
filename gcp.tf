@@ -117,11 +117,11 @@ resource "google_dns_managed_zone" "tf_zone" {
   dns_name = "tf.hkjn.me."
 }
 
-resource "google_dns_record_set" "sample" {
-  name = "m1.${google_dns_managed_zone.tf_zone.dns_name}"
+resource "google_dns_record_set" "dev" {
+  name = "dev.${google_dns_managed_zone.tf_zone.dns_name}"
   type = "A"
   ttl  = 150
 
   managed_zone = "${google_dns_managed_zone.tf_zone.name}"
-  rrdatas      = ["1.2.3.4"]
+  rrdatas      = ["159.203.176.10"]                        # do2
 }
