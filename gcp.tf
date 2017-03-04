@@ -97,6 +97,15 @@ resource "google_dns_record_set" "hkjn_vpn" {
   rrdatas      = ["${var.vpn_ip}"]
 }
 
+resource "google_dns_record_set" "hkjn_cities" {
+  name = "cities.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas      = ["${var.cities_ip}"]
+}
+
 resource "google_dns_record_set" "hkjn_tf_ns" {
   name = "tf.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "NS"
@@ -123,5 +132,5 @@ resource "google_dns_record_set" "dev" {
   ttl  = 150
 
   managed_zone = "${google_dns_managed_zone.tf_zone.name}"
-  rrdatas      = ["159.203.176.10"]                        # do2
+  rrdatas      = ["212.47.239.127"]                        # sz9
 }

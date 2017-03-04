@@ -11,13 +11,17 @@ variable "gcloud_region" {
 }
 
 variable "hkjnweb_ip" {
-	default = "163.172.173.208"
+  default = "163.172.173.208"
 }
 
 variable "mon_ip" {
-	default = "212.47.239.127"
+  default = "212.47.239.127"
 }
 
 variable "vpn_ip" {
-	default = "212.47.239.127"
+  default = "212.47.239.127"
+}
+
+variable "cities_ip" {
+  default = "212.47.239.127"
 }
