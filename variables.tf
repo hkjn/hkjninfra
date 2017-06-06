@@ -15,13 +15,13 @@ variable "hkjnweb_ip" {
 }
 
 variable "mon_ip" {
-  default = "212.47.239.127"
+  default = "163.172.184.153"
 }
 
 variable "vpn_ip" {
-  default = "212.47.239.127"
+  default = "163.172.184.153"
 }
 
 variable "cities_ip" {
-  default = "212.47.239.127"
+  default = "163.172.184.153"
 }
