@@ -25,3 +25,7 @@ variable "vpn_ip" {
 variable "cities_ip" {
   default = "163.172.184.153"
 }
+
+variable "elentari_world_ip" {
+  default = "163.172.184.153"
+}

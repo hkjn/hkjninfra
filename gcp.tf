@@ -134,3 +134,26 @@ resource "google_dns_record_set" "dev" {
   managed_zone = "${google_dns_managed_zone.tf_zone.name}"
   rrdatas      = ["212.47.239.127"]                        # sz9
 }
+
+resource "google_dns_managed_zone" "elentari_world_zone" {
+  name     = "elentari-world-zone"
+  dns_name = "elentari.world."
+}
+
+resource "google_dns_record_set" "elentari_world_web" {
+  name = "${google_dns_managed_zone.elentari_world_zone.dns_name}"
+  type = "A"
+  ttl  = 150
+
+  managed_zone = "${google_dns_managed_zone.elentari_world_zone.name}"
+  rrdatas      = ["${var.elentari_world_ip}"]
+}
+
+resource "google_dns_record_set" "elentari_world_cname" {
+  name = "www.${google_dns_managed_zone.elentari_world_zone.dns_name}"
+  type = "CNAME"
+  ttl  = 150
+
+  managed_zone = "${google_dns_managed_zone.elentari_world_zone.name}"
+  rrdatas      = ["sultanyoga.com."]
+}
