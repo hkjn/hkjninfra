@@ -100,6 +100,41 @@ resource "google_dns_record_set" "hkjn_iosdev" {
   ]
 }
 
+
+resource "google_dns_record_set" "hkjn_gz0" {
+  name = "gz0.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+
+  rrdatas = [
+    "130.211.84.102",
+  ]
+}
+
+resource "google_dns_record_set" "hkjn_gz5" {
+  name = "gz5.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas = [
+    "35.189.120.224",
+  ]
+}
+
+resource "google_dns_record_set" "hkjn_zs10" {
+  name = "zs10.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas = [
+    "163.172.184.153",
+  ]
+}
+
 resource "google_dns_record_set" "hkjn_vpn" {
   name = "vpn.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"

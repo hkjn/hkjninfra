@@ -1,3 +1,4 @@
+*.swp
 .gcp/
 .terraform.d/
 .terraform/
