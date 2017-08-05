@@ -49,6 +49,10 @@ resource "google_compute_instance" "zg0" {
   metadata {
     sshKeys = "core:${var.gz1_pubkey}"
   }
+  # TODO: Start discovering metadata from inside instance in gather_facts, e.g:
+  # core@zg0 ~ $ curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/description; echo
+  # Dev and build instance
+
   metadata_startup_script = "${file("bootstrap.yml")}"
   service_account {
     scopes = ["userinfo-email", "compute-ro", "storage-ro"]
@@ -232,7 +236,6 @@ resource "google_dns_record_set" "elentari_world_cname" {
   name = "www.${google_dns_managed_zone.elentari_world_zone.dns_name}"
   type = "CNAME"
   ttl  = 150
-
   managed_zone = "${google_dns_managed_zone.elentari_world_zone.name}"
   rrdatas      = ["sultanyoga.com."]
 }
