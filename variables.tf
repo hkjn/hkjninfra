@@ -38,7 +38,3 @@ variable "cities_ip" {
 variable "elentari_world_ip" {
   default = "163.172.184.153"
 }
-
-variable "iosdev_ip" {
-  default = "130.211.84.102"
-}
