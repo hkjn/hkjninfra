@@ -20,6 +20,7 @@ resource "google_compute_firewall" "default" {
     protocol = "tcp"
     ports    = ["22", "60000-60100"]
   }
+  source_ranges = ["0.0.0.0/0"]
   target_tags = ["dev"]
 }
 
