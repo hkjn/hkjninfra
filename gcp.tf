@@ -1,8 +1,58 @@
-// Configure the Google Cloud provider
+# Configure the Google Cloud provider
 provider "google" {
   credentials = "${file(var.gcloud_credentials)}"
   project     = "${var.gcloud_project}"
   region      = "${var.gcloud_region}"
+}
+
+resource "google_compute_network" "default" {
+  name                    = "tf-net0"
+  auto_create_subnetworks = "true"
+}
+
+resource "google_compute_firewall" "default" {
+  name    = "tf-allow-ssh-ping"
+  network = "${google_compute_network.default.name}"
+  allow {
+    protocol = "icmp"
+  }
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "60000-60100"]
+  }
+  target_tags = ["dev"]
+}
+
+resource "google_compute_disk" "zg0_disk0" {
+  name  = "test-disk"
+  type  = "pd-ssd"
+  zone  = "europe-west3-b"
+}
+
+resource "google_compute_instance" "zg0" {
+  name         = "zero-dev0"
+  description  = "Dev and build instance"
+  machine_type = "g1-small"
+  zone         = "europe-west3-b"
+  tags = ["dev", "builder"]
+  disk {
+    image = "coreos-alpha-1492-1-0-v20170803"
+  }
+  # Local SSD disk
+  attached_disk {
+    source = "${google_compute_disk.zg0_disk0.self_link}"
+  }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.gz1_pubkey}"
+  }
+  metadata_startup_script = "echo hi > /tmp/test.txt"
+  service_account {
+    scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+  }
 }
 
 resource "google_dns_managed_zone" "hkjn_zone" {
@@ -99,7 +149,6 @@ resource "google_dns_record_set" "hkjn_iosdev" {
     "${var.iosdev_ip}",
   ]
 }
-
 
 resource "google_dns_record_set" "hkjn_gz0" {
   name = "gz0.${google_dns_managed_zone.hkjn_zone.dns_name}"
