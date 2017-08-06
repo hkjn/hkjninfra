@@ -18,7 +18,7 @@ resource "google_compute_firewall" "default" {
   }
   allow {
     protocol = "tcp"
-    ports    = ["22", "60000-60100"]
+    ports    = ["22", "6200", "60000-60100"]
   }
   source_ranges = ["0.0.0.0/0"]
   target_tags = ["dev"]
@@ -53,6 +53,12 @@ resource "google_compute_instance" "zg0" {
   # TODO: Start discovering metadata from inside instance in gather_facts, e.g:
   # core@zg0 ~ $ curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/description; echo
   # Dev and build instance
+  #
+  # TODO: Set sshd port in bootstrap:
+  # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
+  # [Socket]
+  # ListenStream=
+  # ListenStream=6200
 
   metadata_startup_script = "${file("bootstrap.yml")}"
   service_account {
