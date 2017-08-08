@@ -10,7 +10,7 @@ resource "google_compute_network" "default" {
   auto_create_subnetworks = "true"
 }
 
-resource "google_compute_firewall" "default" {
+resource "google_compute_firewall" "allow_ssh" {
   name    = "tf-allow-ssh-ping"
   network = "${google_compute_network.default.name}"
   allow {
@@ -24,6 +24,17 @@ resource "google_compute_firewall" "default" {
   target_tags = ["dev"]
 }
 
+resource "google_compute_firewall" "bitcoin" {
+  name = "tf-allow-bitcoin"
+  network = "${google_compute_network.default.name}"
+  allow {
+    protocol = "tcp"
+    ports = ["8333"]
+  }
+  source_ranges = ["0.0.0.0/0"]
+  target_tags = ["bitcoin"]
+}
+
 resource "google_compute_disk" "zg0_disk0" {
   name  = "test-disk"
   type  = "pd-ssd"
@@ -31,12 +42,12 @@ resource "google_compute_disk" "zg0_disk0" {
   size  = "200"
 }
 
-resource "google_compute_instance" "zg0" {
-  name         = "zg0"
+resource "google_compute_instance" "zg1" {
+  name         = "zg1"
   description  = "Dev and build instance"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
-  tags = ["dev", "builder"]
+  tags = ["dev", "builder", "bitcoin"]
   disk {
     image = "coreos-alpha-1492-1-0-v20170803"
   }

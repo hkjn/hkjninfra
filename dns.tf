@@ -94,7 +94,7 @@ resource "google_dns_record_set" "hkjn_iosdev" {
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "${google_compute_instance.zg0.network_interface.0.access_config.0.assigned_nat_ip}",
+    "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}",
   ]
 }
 

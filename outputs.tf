@@ -6,8 +6,8 @@ output "hkjn_zs10_ip" {
   value = "${google_dns_record_set.hkjn_zs10.rrdatas[0]}"
 }
 
-output "hkjn_zg0_ip" {
-  value = "${google_compute_instance.zg0.network_interface.0.access_config.0.assigned_nat_ip}"
+output "hkjn_zg1_ip" {
+  value = "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}"
 }
 
 output "hkjn_cities_addr" {
