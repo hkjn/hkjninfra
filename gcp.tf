@@ -18,7 +18,11 @@ resource "google_compute_firewall" "allow_ssh" {
   }
   allow {
     protocol = "tcp"
-    ports    = ["22", "6200", "60000-60100"]
+    ports    = ["22", "6200"]
+  }
+  allow {
+    protocol = "udp"
+    ports    = ["60000-60100"]
   }
   source_ranges = ["0.0.0.0/0"]
   target_tags = ["dev"]
