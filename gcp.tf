@@ -46,6 +46,28 @@ resource "google_compute_disk" "zg0_disk0" {
   size  = "200"
 }
 
+resource "google_compute_instance" "zg3" {
+  count = 0
+
+  name         = "zg3"
+  description  = "Bootstrap test"
+  machine_type = "f1-micro"
+  zone         = "europe-west3-b"
+  tags = ["dev"]
+  disk {
+    image = "coreos-alpha-1492-1-0-v20170803"
+  }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+  }
+  metadata_startup_script = "${file("bootstrap.sh")}"
+}
+
+
 resource "google_compute_instance" "zg1" {
   name         = "zg1"
   description  = "Dev and build instance"
@@ -80,4 +102,3 @@ resource "google_compute_instance" "zg1" {
     scopes = ["userinfo-email", "compute-ro", "storage-ro"]
   }
 }
-
