@@ -15,6 +15,14 @@ variable "gcloud_region" {
   default = "europe-west1"
 }
 
+variable "coreos_alpha_image" {
+  default = "coreos-alpha-1492-3-0-v20170810"
+}
+
+variable "coreos_beta_image" {
+  default = "coreos-beta-1465-4-0-v20170810"
+}
+
 variable "gz1_pubkey" {
   default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDhkGPTKaQxOkrRO4gyJFr5ewcIHVcQ+YyEeTWfK1GpwKwjMZNhbXCL0DeTxjYx+JHMqStxlKi6H/+dDJSiohbIi1MqPcpPvaY2whLPSHrV4b17tYXjnkZbowDp54QCTLgcXmfckpKosulV56t6GGXZ2PmlP85QkpyeF+8/EyS+8XFQi1GeWOwgnBvmyRRxSBwsJnMt+aJdCcIRv0sO+pKuzCJFLJ2D82sRbfLLIWOy0BkzaUMevO+sUYmmRgJ2Kis7MFNYC8c6i2GHTuRex5t0fHyCzp7qHLISAhjS4d5mmpfUeMJot7WlOiwlVTMcoQSFY0boTuDSEoVxzwu3/R2zc6Hu+RGBKZbIR6ksKZFPe64dPGJXzfX/3oyqhFQKF3A9kl9wNGq2RQweEaRtHmvToAf49iN+8q5vMdSD0XbCxJwakCj+nKLprp7yexydj6JX+lDbXtxJyF5ECuN4mE0Mi09dFJSS4e09c9bCSrIM+6AXOLpU10Kq2KqAiRxRpdV5UxheHeK89E6Z4Y8d1DggmrnQxSfvmfCctqsJVWuXC2yl+py8PmP1I9HclyBwCReTVUpOOJknQILh1lubAtboBbBK9zAIh8k13224ricxSDhiP4T+Jl6tguzxK7hQ1zQJlRipyTtaktSSikA2aMobmHo2IoifRkblJ2Wc6BiOOQ== gz1"
 }

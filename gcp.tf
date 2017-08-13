@@ -46,6 +46,13 @@ resource "google_compute_disk" "zg0_disk0" {
   size  = "200"
 }
 
+resource "google_compute_disk" "zdisk1" {
+  name  = "zdisk1"
+  type  = "pd-ssd"
+  zone  = "europe-west3-b"
+  size  = "20"
+}
+
 resource "google_compute_instance" "zg3" {
   count = 1
 
@@ -55,7 +62,10 @@ resource "google_compute_instance" "zg3" {
   zone         = "europe-west3-b"
   tags = ["dev"]
   disk {
-    image = "coreos-alpha-1492-1-0-v20170803"
+    image = "${var.coreos_alpha_image}"
+  }
+  attached_disk {
+    source = "${google_compute_disk.zdisk1.self_link}"
   }
   network_interface {
     network = "${google_compute_network.default.name}"
@@ -74,7 +84,7 @@ resource "google_compute_instance" "zg1" {
   zone         = "europe-west3-b"
   tags = ["dev", "builder", "bitcoin"]
   disk {
-    image = "coreos-alpha-1492-1-0-v20170803"
+    image = "${var.coreos_beta_image}"
   }
   attached_disk {
     source = "${google_compute_disk.zg0_disk0.self_link}"
