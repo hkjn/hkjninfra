@@ -47,7 +47,7 @@ resource "google_compute_disk" "zg0_disk0" {
 }
 
 resource "google_compute_instance" "zg3" {
-  count = 0
+  count = 1
 
   name         = "zg3"
   description  = "Bootstrap test"
@@ -63,10 +63,9 @@ resource "google_compute_instance" "zg3" {
   }
   metadata {
     sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+    user-data = "${file("bootstrap.json")}"
   }
-  metadata_startup_script = "${file("bootstrap.sh")}"
 }
-
 
 resource "google_compute_instance" "zg1" {
   name         = "zg1"
