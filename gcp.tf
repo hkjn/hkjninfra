@@ -54,7 +54,7 @@ resource "google_compute_disk" "zdisk1" {
 }
 
 resource "google_compute_instance" "zg3" {
-  count = 1
+  count = 0
 
   name         = "zg3"
   description  = "Bootstrap test"
