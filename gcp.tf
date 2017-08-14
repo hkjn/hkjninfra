@@ -54,7 +54,7 @@ resource "google_compute_disk" "zdisk1" {
 }
 
 resource "google_compute_instance" "zg3" {
-  count = 0
+  count = 1
 
   name         = "zg3"
   description  = "Bootstrap test"
@@ -73,7 +73,7 @@ resource "google_compute_instance" "zg3" {
   }
   metadata {
     sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
-    user-data = "${file("bootstrap.json")}"
+    user-data = "${file("bootstrap_zg3.yml.json")}"
   }
 }
 
@@ -95,18 +95,14 @@ resource "google_compute_instance" "zg1" {
   }
   metadata {
     sshKeys = "core:${var.gz1_pubkey}"
+     user-data = "${file("bootstrap_zg1.yml.json")}"
   }
-  # TODO: Start discovering metadata from inside instance in gather_facts, e.g:
-  # core@zg0 ~ $ curl -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/description; echo
-  # Dev and build instance
-  #
   # TODO: Set sshd port in bootstrap:
   # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
   # [Socket]
   # ListenStream=
   # ListenStream=6200
 
-  metadata_startup_script = "${file("bootstrap.yml")}"
   service_account {
     scopes = ["userinfo-email", "compute-ro", "storage-ro"]
   }

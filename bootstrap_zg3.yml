@@ -1,0 +1,48 @@
+# This config is meant to be consumed by the config transpiler, which will
+# generate the corresponding Ignition config. Do not pass this config directly
+# to instances of Container Linux.
+
+update:
+  group:  "alpha"
+
+locksmith:
+  reboot_strategy: "etcd-lock"
+
+storage:
+  filesystems:
+    - mount:
+        device: /dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
+        format: ext4
+        create:
+
+systemd:
+  units:
+    - name: report_client.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=report client
+        After=network-online.target
+        
+        [Service]
+        Environment=PATH=/usr/bin/:/opt/bin:/bin
+        Environment=REPORT_ADDR=mon.hkjn.me:50051
+        Environment=REPORT_NAME=%H
+        Environment=REPORT_FACTS_PATH=/etc/report/facts.json
+        EnvironmentFile=/etc/report/report.env
+        Workdir=/opt/bin
+        ExecStartPre=-/bin/bash -c "gather_facts > /etc/report/facts.json"
+        ExecStart=/bin/bash -c report_client
+
+        [Install]
+        WantedBy=network-online.target
+    - name: media-backup.mount
+      enable: true
+      contents: |
+        [Mount]
+        What=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
+        Where=/media/backup
+        Type=ext4
+
+        [Install]
+        RequiredBy=local-fs.target

@@ -5,7 +5,7 @@
 storage:
   filesystems:
     - mount:
-        device: /dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
+        device: /dev/disk/by-id/scsi-0Google_PersistentDisk_database-backup
         format: ext4
         create:
 
@@ -15,7 +15,7 @@ systemd:
       enable: true
       contents: |
         [Mount]
-        What=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
+        What=/dev/disk/by-id/scsi-0Google_PersistentDisk_database-backup
         Where=/media/backup
         Type=ext4
 
