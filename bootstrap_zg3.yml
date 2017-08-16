@@ -29,11 +29,11 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://github.com/hkjn/junk/releases/download/1.5.7/report_client_x86_64
+          url: https://github.com/hkjn/junk/releases/download/1.5.10/report_client_x86_64
           verification:
             hash:
               function: sha512
-              sum: 402bb4f50a51513f5ed2ec1532f6843e16d30479e7945a7549b37743899236b302b5dad2cf4b8bea9f690c264ded90be14bb935904f7b5c5cab0e9ab27659448
+              sum: f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08
       mode: 0755
 
 systemd:
@@ -49,14 +49,25 @@ systemd:
         Environment=PATH=/usr/bin/:/opt/bin:/bin
         Environment=REPORT_ADDR=mon.hkjn.me:50051
         Environment=REPORT_NAME=%H
-        Environment=REPORT_FACTS_PATH=/etc/report/facts.json
-        EnvironmentFile=/etc/report/report.env
-        Workdir=/opt/bin
-        ExecStartPre=-/bin/bash -c "gather_facts > /etc/report/facts.json"
+        Environment=REPORT_FACTS_PATH=/etc/report_facts.json
+        ExecStartPre=-/bin/bash -c "gather_facts > /etc/report_facts.json"
         ExecStart=/bin/bash -c report_client
 
         [Install]
         WantedBy=network-online.target
+    - name: report_client.timer
+      enable: true
+      contents: |
+        [Unit]
+        Description=Timer that starts report_client.service
+
+        [Timer]
+        # Run every 5 min.
+        OnCalendar=*:0/5
+        Persistent=true
+
+        [Install]
+        WantedBy=local.target
     - name: data.mount
       enable: true
       contents: |
