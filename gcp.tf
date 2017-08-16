@@ -32,6 +32,21 @@ resource "google_compute_firewall" "allow_ssh" {
   target_tags = ["dev"]
 }
 
+resource "google_compute_firewall" "http" {
+  name = "tf-allow-http"
+  network = "${google_compute_network.default.name}"
+  allow {
+    protocol = "tcp"
+    ports = ["80"]
+  }
+  allow {
+    protocol = "tcp"
+    ports = ["443"]
+  }
+  source_ranges = ["0.0.0.0/0"]
+  target_tags = ["http"]
+}
+
 resource "google_compute_firewall" "bitcoin" {
   name = "tf-allow-bitcoin"
   network = "${google_compute_network.default.name}"
@@ -70,7 +85,7 @@ resource "google_compute_instance" "zg1" {
   description  = "Dev and build instance"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
-  tags = ["dev", "builder", "bitcoin"]
+  tags = ["dev", "builder", "bitcoin", "http"]
   disk {
     image = "${var.coreos_beta_image}"
   }
@@ -103,7 +118,7 @@ resource "google_compute_instance" "zg3" {
   description  = "Bootstrap test"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
-  tags = ["dev"]
+  tags = ["dev", "http"]
   disk {
     image = "${var.coreos_alpha_image}"
   }

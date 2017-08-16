@@ -143,6 +143,26 @@ resource "google_dns_record_set" "dev" {
   rrdatas      = ["212.47.239.127"]                        # sz9
 }
 
+
+#
+# *.decenter.world
+#
+
+resource "google_dns_managed_zone" "decenter_world_zone" {
+  name     = "decenter-world-zone"
+  dns_name = "decenter.world."
+}
+
+resource "google_dns_record_set" "decenter_world" {
+  name = "${google_dns_managed_zone.decenter_world_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+  managed_zone = "${google_dns_managed_zone.decenter_world_zone.name}"
+  rrdatas = [
+    "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
+
 #
 # *.elentari.world
 #
@@ -169,6 +189,15 @@ resource "google_dns_record_set" "elentari_world_cname" {
 }
 
 #
+# *.unmiddle.men
+#
+
+resource "google_dns_managed_zone" "unmiddle_men_zone" {
+  name     = "unmiddle-men-zone"
+  dns_name = "ummiddle.men."
+}
+
+#
 # Individual *.hkjn.me nodes
 #
 
@@ -191,6 +220,17 @@ resource "google_dns_record_set" "hkjn_zs10" {
     "163.172.184.153",
   ]
 }
+
+resource "google_dns_record_set" "hkjn_zg1" {
+  name = "zg1.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas = [
+    "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
+
 
 resource "google_dns_record_set" "hkjn_zg3" {
   name = "zg3.${google_dns_managed_zone.hkjn_zone.dns_name}"
