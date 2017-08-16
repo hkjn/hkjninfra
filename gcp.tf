@@ -5,6 +5,10 @@ provider "google" {
   region      = "${var.gcloud_region}"
 }
 
+#
+# Network and firewalls.
+#
+
 resource "google_compute_network" "default" {
   name                    = "tf-net0"
   auto_create_subnetworks = "true"
@@ -39,6 +43,10 @@ resource "google_compute_firewall" "bitcoin" {
   target_tags = ["bitcoin"]
 }
 
+#
+# Storage.
+#
+
 resource "google_compute_disk" "zg0_disk0" {
   name  = "test-disk"
   type  = "pd-ssd"
@@ -53,29 +61,9 @@ resource "google_compute_disk" "zdisk1" {
   size  = "20"
 }
 
-resource "google_compute_instance" "zg3" {
-  count = 1
-
-  name         = "zg3"
-  description  = "Bootstrap test"
-  machine_type = "f1-micro"
-  zone         = "europe-west3-b"
-  tags = ["dev"]
-  disk {
-    image = "${var.coreos_alpha_image}"
-  }
-  attached_disk {
-    source = "${google_compute_disk.zdisk1.self_link}"
-  }
-  network_interface {
-    network = "${google_compute_network.default.name}"
-    access_config {} # Ephemeral IP
-  }
-  metadata {
-    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
-    user-data = "${file("bootstrap_zg3.yml.json")}"
-  }
-}
+#
+# Instances.
+#
 
 resource "google_compute_instance" "zg1" {
   name         = "zg1"
@@ -105,5 +93,29 @@ resource "google_compute_instance" "zg1" {
 
   service_account {
     scopes = ["userinfo-email", "compute-ro", "storage-ro"]
+  }
+}
+
+resource "google_compute_instance" "zg3" {
+  count = 1
+
+  name         = "zg3"
+  description  = "Bootstrap test"
+  machine_type = "f1-micro"
+  zone         = "europe-west3-b"
+  tags = ["dev"]
+  disk {
+    image = "${var.coreos_alpha_image}"
+  }
+  attached_disk {
+    source = "${google_compute_disk.zdisk1.self_link}"
+  }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+    user-data = "${file("bootstrap_zg3.yml.json")}"
   }
 }

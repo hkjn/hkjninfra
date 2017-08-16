@@ -68,16 +68,6 @@ resource "google_dns_record_set" "hkjn_mail" {
 #	]
 #}
 
-resource "google_dns_record_set" "hkjn_mon" {
-  name = "mon.${google_dns_managed_zone.hkjn_zone.dns_name}"
-  type = "A"
-  ttl  = 300
-  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas = [
-    "${var.mon_ip}",
-  ]
-}
-
 resource "google_dns_record_set" "hkjn_admin" {
   name = "admin.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
@@ -86,6 +76,14 @@ resource "google_dns_record_set" "hkjn_admin" {
   rrdatas = [
     "130.211.84.102",
   ]
+}
+
+resource "google_dns_record_set" "hkjn_cities" {
+  name = "cities.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas      = ["${var.cities_ip}"]
 }
 
 resource "google_dns_record_set" "hkjn_iosdev" {
@@ -98,13 +96,13 @@ resource "google_dns_record_set" "hkjn_iosdev" {
   ]
 }
 
-resource "google_dns_record_set" "hkjn_zg3" {
-  name = "zg3.${google_dns_managed_zone.hkjn_zone.dns_name}"
+resource "google_dns_record_set" "hkjn_mon" {
+  name = "mon.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
+    "${var.mon_ip}",
   ]
 }
 
@@ -114,14 +112,6 @@ resource "google_dns_record_set" "hkjn_vpn" {
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas      = ["${var.vpn_ip}"]
-}
-
-resource "google_dns_record_set" "hkjn_cities" {
-  name = "cities.${google_dns_managed_zone.hkjn_zone.dns_name}"
-  type = "A"
-  ttl  = 300
-  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas      = ["${var.cities_ip}"]
 }
 
 #
@@ -202,4 +192,13 @@ resource "google_dns_record_set" "hkjn_zs10" {
   ]
 }
 
+resource "google_dns_record_set" "hkjn_zg3" {
+  name = "zg3.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 300
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas = [
+    "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
 

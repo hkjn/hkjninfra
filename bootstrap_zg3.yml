@@ -14,6 +14,27 @@ storage:
         device: /dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
         format: ext4
         create:
+  files:
+    - path: /opt/bin/gather_facts
+      filesystem: root
+      contents:
+        remote:
+          url: https://raw.githubusercontent.com/hkjn/junk/master/prototest/gather_facts
+          verification:
+            hash:
+              function: sha512
+              sum: adb4105abef8d0604417009ecc0b7863ddf5a91cbbe4e17a0fed0ffccd83f8eb49957f396ed7eb10c533d9ea11eae8eb76e2a1144809db2c1c59894d21b6f61c
+      mode: 0755
+    - path: /opt/bin/report_client
+      filesystem: root
+      contents:
+        remote:
+          url: https://github.com/hkjn/junk/releases/download/1.5.7/report_client_x86_64
+          verification:
+            hash:
+              function: sha512
+              sum: 402bb4f50a51513f5ed2ec1532f6843e16d30479e7945a7549b37743899236b302b5dad2cf4b8bea9f690c264ded90be14bb935904f7b5c5cab0e9ab27659448
+      mode: 0755
 
 systemd:
   units:
@@ -36,12 +57,12 @@ systemd:
 
         [Install]
         WantedBy=network-online.target
-    - name: media-backup.mount
+    - name: data.mount
       enable: true
       contents: |
         [Mount]
         What=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
-        Where=/media/backup
+        Where=/data
         Type=ext4
 
         [Install]
