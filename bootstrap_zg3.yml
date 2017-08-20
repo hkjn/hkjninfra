@@ -35,7 +35,17 @@ storage:
               function: sha512
               sum: f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08
       mode: 0755
-
+    - path: /opt/bin/decenter_world
+      filesystem: root
+      contents:
+        remote:
+          url: https://github.com/hkjn/decenter.world/releases/download/1.0.1/decenter_world_x86_64
+          verification:
+            hash:
+              function: sha512
+              sum: a4811fbd14348b28a978745594ec74e5838f72b293a3f801e74e5eb5538450bacabeb40892cd862d7df6c780aa1bfb8ec20431c076d7534345a32a2462a6bd66
+      mode: 0755
+# TODO: Fetch decenter_redirector_x86_64 from releases.
 systemd:
   units:
     - name: report_client.service
@@ -68,6 +78,21 @@ systemd:
 
         [Install]
         WantedBy=local.target
+    - name: decenter.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=decenter.world server
+        After=network-online.target
+
+        [Service]
+        Environment=PATH=/usr/bin/:/opt/bin:/bin
+        Environment=DECENTER_WORLD_ADDR=:443
+        ExecStart=/usr/bin/bash -c "decenter_world"
+        Restart=always
+
+        [Install]
+        WantedBy=network-online.target
     - name: data.mount
       enable: true
       contents: |
