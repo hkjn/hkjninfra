@@ -1,0 +1,41 @@
+#
+# Install the latest version of the binaries.
+#
+set -euo pipefail
+
+declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${BASE}"
+declare VERSION="$(cat VERSION)"
+declare RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
+declare SERVER_URL="${RELEASE_URL}/tserver_$(uname -m)"
+declare CLIENT_URL="${RELEASE_URL}/tclient_$(uname -m)"
+
+fetch() {
+	local target
+	target="$1"
+	[[ "${target}" = "tserver" ]] || [[ "${target}" = "tclient" ]] || \
+	    fatal "Usage: fetch [ tserver | tclient ]"
+	local tempdir
+	tempdir="$(mktemp -d)"
+	cd "${tempdir}"
+	info "Fetching ${target} binary ${VERSION} for $(uname -m).."
+	local url
+	if [[ "${target}" = "report_server" ]]; then
+		url="${SERVER_URL}"
+	else
+		url="${CLIENT_URL}"
+	fi
+	debug "Sending request: curl -fSLo ${url}"
+	curl -fSLo ${target} \
+	     --progress-bar \
+	     ${url} \
+	   | tee /dev/null
+	sudo mkdir -p /opt/bin/
+	sudo install ${target} /opt/bin/${target}
+	info "Installed ${target} ${VERSION}."
+}
+
+source "logging.sh"
+
+fetch tserver
+fetch tclient
