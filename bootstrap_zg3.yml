@@ -39,13 +39,22 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://github.com/hkjn/decenter.world/releases/download/1.0.1/decenter_world_x86_64
+          url: https://github.com/hkjn/decenter.world/releases/download/1.1.1/decenter_world_x86_64
           verification:
             hash:
               function: sha512
-              sum: a4811fbd14348b28a978745594ec74e5838f72b293a3f801e74e5eb5538450bacabeb40892cd862d7df6c780aa1bfb8ec20431c076d7534345a32a2462a6bd66
+              sum: 720604e3d5e594076f9ff2416a9a56b3354dc5255c0b42fe8de8aeb268b39eda80380f466b4834ab8812888995d83b96ff76948a90f7022d0ec0ef3bee4a2965
       mode: 0755
-# TODO: Fetch decenter_redirector_x86_64 from releases.
+    - path: /opt/bin/decenter_redirector
+      filesystem: root
+      contents:
+        remote:
+          url: https://github.com/hkjn/decenter.world/releases/download/1.1.1/decenter_redirector_x86_64
+          verification:
+            hash:
+              function: sha512
+              sum: 8026412bcc856bb073e01a5b984e0a2161049b76e575cfc506bf733a03ca70ed2fffe0a83d269a578936a545066500603b3a86c9e6a47905376108b8af41837e
+      mode: 0755
 systemd:
   units:
     - name: report_client.service
@@ -64,7 +73,7 @@ systemd:
         ExecStart=/bin/bash -c report_client
 
         [Install]
-        WantedBy=network-online.target
+        WantedBy=multi-user.target
     - name: report_client.timer
       enable: true
       contents: |
@@ -77,7 +86,7 @@ systemd:
         Persistent=true
 
         [Install]
-        WantedBy=local.target
+        WantedBy=multi-user.target
     - name: decenter.service
       enable: true
       contents: |
@@ -92,7 +101,21 @@ systemd:
         Restart=always
 
         [Install]
-        WantedBy=network-online.target
+        WantedBy=multi-user.target
+    - name: decenter_redirector.service
+      enable: true
+      contents: |
+        [Unit]
+         Description=decenter.world redirector server
+         After=network-online.target
+
+         [Service]
+         Environment=PATH=/usr/bin/:/opt/bin:/bin
+         ExecStart=/usr/bin/bash -c "decenter_redirector"
+         Restart=always
+
+         [Install]
+         WantedBy=network-online.target
     - name: data.mount
       enable: true
       contents: |
