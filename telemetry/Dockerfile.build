@@ -15,24 +15,21 @@ COPY ["client", "./client"]
 COPY ["report/*.proto", "/tmp/report/"]
 COPY ["vendor", "./vendor"]
 
-RUN ls -hsal
 # Note that we have to COPY the .proto files to /tmp first, then
 # move them as non-privileged user, to allow protoc to write them
 # when running as user.
 RUN mkdir -p /home/user/bin/report && \
     mkdir -p report && \
-    ls -hsal && cp /tmp/report/*.proto report/
-RUN ls -hsal report/
-RUN protoc -I report/ report/report.proto --go_out=plugins=grpc:report
-RUN \
+    cp /tmp/report/*.proto report/ && \
+    protoc -I report/ report/report.proto --go_out=plugins=grpc:report && \
     cp report/*.pb.go ~/bin/report/
 
 WORKDIR /home/user/bin
 RUN GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client
 RUN GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
-RUN GOARCH=arm go build -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
-RUN GOARCH=arm go build -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server
-
-CMD echo "Binaries available in $(pwd): $(ls -R)"
+# TODO: Reenable once image with alpine cross-compilation works
+# RUN GOARCH=arm go build -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
+# RUN GOARCH=arm go build -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server
+ENTRYPOINT ["sh"]
 
 

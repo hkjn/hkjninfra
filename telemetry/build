@@ -23,9 +23,12 @@ echo "const Version=\"$(cat ../VERSION)\"" >> ${BUILD_DIR}/server/version.go
 
 # TODO: Use heredoc or set build parameter as argument.
 docker build -t telemetry-build ${BUILD_DIR}
+echo "Running tbuild container.."
 docker run --name tbuild telemetry-build
+echo "Removing bin.."
 rm -rf bin/
-docker cp tbuild:/home/go/bin/ $(pwd)
+docker cp tbuild:/home/user/bin/ $(pwd)
 docker rm tbuild
-mv -v bin/* .
+mv -v bin/tclient* bin/tserver* .
 mv -v bin/report/*.pb.go report/
+rm -rf bin/
