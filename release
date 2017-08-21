@@ -91,6 +91,6 @@ build_binaries
 create_tag
 create_release
 
-upload decenter_world_x86_64 ${URL}
-upload decenter_redirector_x86_64 ${URL}
+upload telemetry/tclient_x86_64 ${URL}
+upload telemetry/tserver_x86_64 ${URL}
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}."
