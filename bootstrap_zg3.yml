@@ -115,7 +115,7 @@ systemd:
          Restart=always
 
          [Install]
-         WantedBy=network-online.target
+         WantedBy=multi-user.target
     - name: data.mount
       enable: true
       contents: |
