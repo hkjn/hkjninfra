@@ -19,7 +19,7 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://raw.githubusercontent.com/hkjn/hkjninfra/master/telemetry/gather_facts
+          url: https://github.com/hkjn/hkjninfra/releases/download/1.0.5/gather_facts
           verification:
             hash:
               function: sha512
@@ -29,11 +29,11 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://github.com/hkjn/hkjninfra/releases/download/1.0.4/report_client_x86_64
+          url: https://github.com/hkjn/hkjninfra/releases/download/1.0.5/report_client_x86_64
           verification:
             hash:
               function: sha512
-              sum: c64597b6c0d645b9704f2686019b06c4c3c160fbaa6dbc93886c6b181608ee5d195cd1f63855fe041100e551d2be860862e37ed293d913873b8e6330bee0454c
+              sum: cb6b5c3a1ac6c56d996c4bcd6f44b76bf63f4f90e81a6fb25273f95e4ce967c38d6ad060844caab7fcbc6ca5a3ed35da1212a6a076ec54cbfdc3e5dfdf41597e
       mode: 0755
     - path: /opt/bin/decenter_world
       filesystem: root
@@ -116,7 +116,7 @@ systemd:
 
          [Install]
          WantedBy=multi-user.target
-    - name: data.mount
+    - name: etc-secrets.mount
       enable: true
       contents: |
         [Mount]
