@@ -55,6 +55,7 @@ storage:
               function: sha512
               sum: 8026412bcc856bb073e01a5b984e0a2161049b76e575cfc506bf733a03ca70ed2fffe0a83d269a578936a545066500603b3a86c9e6a47905376108b8af41837e
       mode: 0755
+
 systemd:
   units:
     - name: report_client.service
@@ -116,12 +117,12 @@ systemd:
 
          [Install]
          WantedBy=multi-user.target
-    - name: data.mount
+    - name: etc-secrets.mount
       enable: true
       contents: |
         [Mount]
         What=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
-        Where=/data
+        Where=/etc/secrets
         Type=ext4
 
         [Install]
