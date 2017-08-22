@@ -94,4 +94,5 @@ create_release
 cd telemetry/
 upload tclient_x86_64 ${URL}
 upload tserver_x86_64 ${URL}
+upload gather_facts ${URL}
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}."
