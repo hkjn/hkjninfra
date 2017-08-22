@@ -19,7 +19,7 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://raw.githubusercontent.com/hkjn/junk/master/prototest/gather_facts
+          url: https://raw.githubusercontent.com/hkjn/hkjninfra/master/telemetry/gather_facts
           verification:
             hash:
               function: sha512
@@ -29,11 +29,11 @@ storage:
       filesystem: root
       contents:
         remote:
-          url: https://github.com/hkjn/junk/releases/download/1.5.10/report_client_x86_64
+          url: https://github.com/hkjn/hkjninfra/releases/download/1.0.4/report_client_x86_64
           verification:
             hash:
               function: sha512
-              sum: f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08
+              sum: c64597b6c0d645b9704f2686019b06c4c3c160fbaa6dbc93886c6b181608ee5d195cd1f63855fe041100e551d2be860862e37ed293d913873b8e6330bee0454c
       mode: 0755
     - path: /opt/bin/decenter_world
       filesystem: root
@@ -121,7 +121,7 @@ systemd:
       contents: |
         [Mount]
         What=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1
-        Where=/data
+        Where=/etc/secrets
         Type=ext4
 
         [Install]

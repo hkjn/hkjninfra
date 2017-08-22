@@ -113,7 +113,6 @@ resource "google_compute_instance" "zg1" {
 
 resource "google_compute_instance" "zg3" {
   count = 1
-
   name         = "zg3"
   description  = "Bootstrap test"
   machine_type = "f1-micro"
