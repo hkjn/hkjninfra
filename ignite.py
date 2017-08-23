@@ -10,26 +10,24 @@ import sys
 def get_config(host):
     if host == 'zg1':
         return {
-                  "ignition": {
-                          "version": "2.0.0",
-                              "config": {}
-                                },
-                    "storage": {
-                            "files": [
-                                      {
-                                                  "filesystem": "root",
-                                                          "path": "/opt/bin/gather_facts",
-                                                                  "contents": {
-                                                                                "source": "https://raw.githubusercontent.com/hkjn/junk/master/prototest/gather_facts",
-                                                                                          "verification": {
-                                                                                                          "hash": "sha512-adb4105abef8d0604417009ecc0b7863ddf5a91cbbe4e17a0fed0ffccd83f8eb49957f396ed7eb10c533d9ea11eae8eb76e2a1144809db2c1c59894d21b6f61c"
-                                                                                                                    }
-                                                                                                  },
-                                                                          "mode": 493,
-                                                                                  "user": {},
-                                                                                          "group": {}
-                                                                                                },
-                                            {
+            "ignition": {
+                "version": "2.0.0",
+                "config": {}
+            },
+            "storage": {
+                "files": [{
+                    "filesystem": "root",
+                    "path": "/opt/bin/gather_facts",
+                    "contents": {
+                        "source": "https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts",
+                        "verification": {
+                            "hash": "sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8",
+                        },
+                    },
+                    "mode": 493,
+                    "user": {},
+                    "group": {},
+                }, {
                                                         "filesystem": "root",
                                                                 "path": "/opt/bin/report_client",
                                                                         "contents": {
@@ -81,29 +79,25 @@ def get_config(host):
         return {
             'ignition': { 'version': '2.0.0', 'config': {} },
             'storage': {
-                "filesystems": [
-                    {
-                        "mount": {
-                            "device": "/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1",
-                            "format": "ext4"
-                            }
-                        }
-                    ],
-                "files": [
-                    {
-                        "filesystem": "root",
-                        "path": "/opt/bin/gather_facts",
-                        "contents": {
-                            "source": "https://raw.githubusercontent.com/hkjn/junk/master/prototest/gather_facts",
-                            "verification": {
-                                "hash": "sha512-adb4105abef8d0604417009ecc0b7863ddf5a91cbbe4e17a0fed0ffccd83f8eb49957f396ed7eb10c533d9ea11eae8eb76e2a1144809db2c1c59894d21b6f61c"
-                                }
-                            },
-                        "mode": 493,
-                        "user": {},
-                        "group": {}
+                "filesystems": [{
+                    "mount": {
+                        "device": "/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1",
+                        "format": "ext4"
+                    },
+                }],
+                "files": [{
+                    "filesystem": "root",
+                    "path": "/opt/bin/gather_facts",
+                    "contents": {
+                        "source": "https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts",
+                        "verification": {
+                            "hash": "sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8",
                         },
-                    {
+                    },
+                    "mode": 493,
+                    "user": {},
+                    "group": {},
+                }, {
                         "filesystem": "root",
                         "path": "/opt/bin/report_client",
                         "contents": {

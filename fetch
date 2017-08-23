@@ -7,35 +7,29 @@ declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare SERVER_URL="${RELEASE_URL}/tserver_$(uname -m)"
+declare WORKDIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
 declare CLIENT_URL="${RELEASE_URL}/tclient_$(uname -m)"
+declare SERVER_URL="${RELEASE_URL}/tserver_$(uname -m)"
 
 fetch() {
-	local target
-	target="$1"
-	[[ "${target}" = "tserver" ]] || [[ "${target}" = "tclient" ]] || \
-	    fatal "Usage: fetch [ tserver | tclient ]"
-	local tempdir
-	tempdir="$(mktemp -d)"
-	cd "${tempdir}"
-	info "Fetching ${target} binary ${VERSION} for $(uname -m).."
 	local url
-	if [[ "${target}" = "report_server" ]]; then
-		url="${SERVER_URL}"
-	else
-		url="${CLIENT_URL}"
-	fi
+	url="$1"
+	cd "${WORKDIR}"
+	info "Fetching '${url}' ${VERSION}.."
+	debug "Working in '${WORKDIR}': $(pwd)"
 	debug "Sending request: curl -fSLo ${url}"
-	curl -fSLo ${target} \
-	     --progress-bar \
-	     ${url} \
-	   | tee /dev/null
-	sudo mkdir -p /opt/bin/
-	sudo install ${target} /opt/bin/${target}
-	info "Installed ${target} ${VERSION}."
+	local checksum
+
+	checksum=$(curl --progress-bar -fSL ${url} \
+	   | tee /dev/null | sha512sum | cut -d ' ' -f1)
+	local file
+	file=$(basename ${url})
+	echo "${checksum} ${file}" >> ${BASE}/${VERSION}.sha512
 }
 
+trap "rm -rf ${WORKDIR}" TERM
 source "logging.sh"
-
-fetch tserver
-fetch tclient
+rm -rf "${BASE}/${VERSION}.sha512"
+fetch "${RELEASE_URL}/tclient_$(uname -m)"
+fetch "${RELEASE_URL}/tserver_$(uname -m)"
+fetch "${RELEASE_URL}/gather_facts"
