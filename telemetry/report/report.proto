@@ -15,7 +15,6 @@ option java_outer_classname = "Report";
 
 // ReportRequest describes the request to report in from a client.
 message ReportRequest {
-	string name = 1;
 	google.protobuf.Timestamp ts = 2;
 	ClientInfo info = 3;
 }
@@ -38,6 +37,7 @@ message DiskInfo {
 
 // ClientInfo describes info for one client.
 message ClientInfo {
+	string id = 13;
 	string allowed_ssh_keys = 1;
 	string cpu_arch = 2;
 	repeated DiskInfo disks = 3; 

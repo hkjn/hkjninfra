@@ -38,15 +38,6 @@ func getAddr(d string) string {
 	return d
 }
 
-// getName returns the name to use when reporting in, given a default.
-func getName(d string) string {
-	nameEnv := os.Getenv("REPORT_NAME")
-	if nameEnv != "" {
-		return nameEnv
-	}
-	return d
-}
-
 // getInfo returns the extra info to use when reporting in.
 func getInfo(d string) (*pb.ClientInfo, error) {
 	factsPath := os.Getenv("REPORT_FACTS_PATH")
@@ -75,13 +66,12 @@ func getClient(addr string) (pb.ReportClient, func() error) {
 }
 
 // send reports to the server.
-func send(c pb.ReportClient, name string) error {
+func send(c pb.ReportClient) error {
 	info, err := getInfo(defaultFactsPath)
 	if err != nil {
 		return err
 	}
 	req := &pb.ReportRequest{
-		Name: name,
 		Ts: &googletime.Timestamp{
 			Seconds: time.Now().Unix(),
 			Nanos:   int32(time.Now().Nanosecond()),
@@ -100,14 +90,12 @@ func send(c pb.ReportClient, name string) error {
 func main() {
 	log.Printf("report_client %s starting..\n", Version)
 	addr := getAddr(defaultAddr)
-	name := getName(defaultName)
 
-	log.Printf("Contacting server at tcp addr %q with our name %q..\n", addr, name)
-
+	log.Printf("Contacting server at tcp addr %q..\n", addr)
 	c, close := getClient(addr)
 	defer close()
 
-	if err := send(c, name); err != nil {
+	if err := send(c); err != nil {
 		log.Fatalf("Could not report: %v", err)
 	}
 }

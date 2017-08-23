@@ -122,17 +122,18 @@ func getInfo(info *pb.ClientInfo) string {
 	for i := range info.Tags {
 		extra = append(extra, fmt.Sprintf("`%s`", info.Tags[i]))
 	}
-	return fmt.Sprintf("`%s` (%s)", info.Hostname, strings.Join(extra, ", "))
+	return fmt.Sprintf("`[%s]` `%s` (%s)", info.Id, info.Hostname, strings.Join(extra, ", "))
 }
 
 // Send implements report.ReportServer.
 func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.ReportResponse, error) {
-	c, existed := s.clients[req.Name]
-	title := "Node"
+	c, existed := s.clients[req.Info.Id]
+	// TODO: Provide API to fetch clients by hostname
+	greeting := "Node"
 	if !existed {
-		title = "New node"
+		greeting = "New node"
 	}
-	msg := fmt.Sprintf("%s reported to us: %s", title, getInfo(req.Info))
+	msg := fmt.Sprintf("%s reported to us: %s", greeting, getInfo(req.Info))
 	// TODO: Validate data; seems like it can become corrupt:
 	// Full info: allowed_ssh_keys:"memory_total_mb" cpu_arch:"7867"
 
@@ -148,14 +149,14 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 		lastSeen: getTime(req.Ts),
 		info:     req.Info,
 	}
-	s.clients[req.Name] = c
+	s.clients[req.Info.Id] = c
 	resp := fmt.Sprintf(
 		"Hello %q, thanks for writing me at %v, it is now %v.",
-		req.Name,
+		req.Info.Id,
 		getTime(req.Ts),
 		time.Now().Unix(),
 	)
-	log.Printf("Responding to client %q: %q..\n", req.Name, resp)
+	log.Printf("Responding to client %q: %q..\n", req.Info.Id, resp)
 	return &pb.ReportResponse{Message: resp}, nil
 }
 
