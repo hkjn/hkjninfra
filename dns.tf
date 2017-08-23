@@ -175,7 +175,7 @@ resource "google_dns_managed_zone" "elentari_world_zone" {
 resource "google_dns_record_set" "elentari_world_web" {
   name = "${google_dns_managed_zone.elentari_world_zone.dns_name}"
   type = "A"
-  ttl  = 150
+  ttl  = 300
   managed_zone = "${google_dns_managed_zone.elentari_world_zone.name}"
   rrdatas      = ["${var.elentari_world_ip}"]
 }
