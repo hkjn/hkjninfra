@@ -4,4 +4,3 @@ terraform.tfstate.backup
 .keys/
 .terraform.d/
 .terraform/
-*.yml.json
