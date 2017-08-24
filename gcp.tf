@@ -133,3 +133,20 @@ resource "google_compute_instance" "zg3" {
     user-data = "${file("bootstrap_zg3.json")}"
   }
 }
+
+resource "google_compute_instance" "elentari-world" {
+  count = "${var.elentari_world_enabled ? 1 : 0}"
+  name         = "elentari-world"
+  description  = "The server for elentari.world."
+  machine_type = "f1-micro"
+  zone         = "europe-west3-b"
+  tags = ["dev", "http"]
+  disk { image = "${var.coreos_alpha_image}" }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.aruna_pubkey}"
+  }
+}

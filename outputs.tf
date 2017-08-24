@@ -1,8 +1,16 @@
-
+#
+# *.decenter.world
+#
 output "decenter_world_addr" {
   value = "${google_dns_record_set.decenter_world.name}"
 }
 
+#
+# *.elentari.world
+#
+output "elentari_world_addr" {
+  value = "${google_dns_record_set.elentari_world_web.name}"
+}
 
 #
 # *.hkjn.me

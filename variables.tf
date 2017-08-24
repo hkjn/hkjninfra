@@ -2,6 +2,10 @@ variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
+variable "elentari_world_enabled" {
+  default = false
+}
+
 variable "aruna_pubkey" {
   default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC9AIuUhqsepqfzgNj+hz+GoGIv5BUqMThpAmTaj4qXnI7ahq7916xvE4OB61CyN0fu69N7cqHN0n0DhzrIKjRJ+mBztKZ1uNDiicoxc2PGpTff42kMA63J36YhS0wPu8hADqm7J9NSt5Ach+IKUtEQNuwnq+nZ3MXOzlRy+B/RsCzfkEatejyEyMPNZ1+TIzzh4xMnjf9ktcR0joxCGASxJPCzI0bV/4NZDWZ8gelTeNobdhfi1qB928VHHG2SrQ+VMNUsnG1D44+fnE0/SnGd8OXA1vFyzn9VLNQE5mhhP7dCaO3O/ODMioEnT2Y5Zn7LfQl4Sm8x+6f2bHh1AzuOL7ActYuur4QVzduPZn1nO6DsHYIKy3OViIQUIk1foN+OeD08QAiL7dgHwzuGYsLs1sK9bD22knb59qlAgfumLjxcxs9dNdVwD5UYJW5/FAQieAql2a5CBhGPIlmk863iVG/gyGgGT7R4dKWGyTraRh2AFEMxVr4Ua/umR1Zx1AN5JZoVv9U4RNQfqO+1oYOKCblx8OMPzGkjYkG2ryPM9bjJVEQg9XfJpmBwI0iyUSzgLDvv38URvpxqX3SeYVMS2iktUde5y+dNTS9QRrlBu7ozMWQN7oqp2Bc+9n1X220yTbvUBPWTs+9X0eYpshfQgcwaI67uGfpytueoFSSSFw=="
 }
