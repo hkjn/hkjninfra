@@ -1,5 +1,4 @@
 run_tf() {
-	echo "Generating Ignition .json.."
 	python ignite.py
 	if [[ $? -ne 0 ]]; then
 		echo "ignite.py failed, bailing." >&2
