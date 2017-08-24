@@ -2,12 +2,8 @@ variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
-variable "elentari_world_enabled" {
-  default = false
-}
-
 variable "aruna_pubkey" {
-  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC9AIuUhqsepqfzgNj+hz+GoGIv5BUqMThpAmTaj4qXnI7ahq7916xvE4OB61CyN0fu69N7cqHN0n0DhzrIKjRJ+mBztKZ1uNDiicoxc2PGpTff42kMA63J36YhS0wPu8hADqm7J9NSt5Ach+IKUtEQNuwnq+nZ3MXOzlRy+B/RsCzfkEatejyEyMPNZ1+TIzzh4xMnjf9ktcR0joxCGASxJPCzI0bV/4NZDWZ8gelTeNobdhfi1qB928VHHG2SrQ+VMNUsnG1D44+fnE0/SnGd8OXA1vFyzn9VLNQE5mhhP7dCaO3O/ODMioEnT2Y5Zn7LfQl4Sm8x+6f2bHh1AzuOL7ActYuur4QVzduPZn1nO6DsHYIKy3OViIQUIk1foN+OeD08QAiL7dgHwzuGYsLs1sK9bD22knb59qlAgfumLjxcxs9dNdVwD5UYJW5/FAQieAql2a5CBhGPIlmk863iVG/gyGgGT7R4dKWGyTraRh2AFEMxVr4Ua/umR1Zx1AN5JZoVv9U4RNQfqO+1oYOKCblx8OMPzGkjYkG2ryPM9bjJVEQg9XfJpmBwI0iyUSzgLDvv38URvpxqX3SeYVMS2iktUde5y+dNTS9QRrlBu7ozMWQN7oqp2Bc+9n1X220yTbvUBPWTs+9X0eYpshfQgcwaI67uGfpytueoFSSSFw=="
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDOz60CdAF7cYXTlKBh+nKhyFa8PhSlSsMODOd4MtSM3Vepx1i1f716BysgfCP822vX14dPJWTEhin/DzrTKsfVDz3EKyj8i4H/eAQ5gs9l99R2DOG6qhZ0SKFMQM1gNTYYvX3qWg+GG/55xrgm6Ol3o0fzSpi0qxB+tvB2QbX7gztaaouerKAWYpe55Oe3mGHG+AYC1FJ4WZo49hQJsUSTAa0rfI2AYJXY5iOKjzjjvJ4zgw8bZax8hUXQG9CsxZRh6P15DOzrDAtBYMwYBIYJ1JolQ25h7e/9QLp18D5FHBN9j0hd7zVTs8CIxz33sBupZNpZ+k7jWOT0BFOkE+2aO4UjnZw8U1LQZpwQk7/dGA/AnlwjJ8W0GwgpTfovuLJvDoOanXoAP6ccsl8upU0R9yGY/JLRultIHAY3YBi9hb7oNNMGtVfyVntokAdiTBPLDDlvIzDU3He8MiOQwRIE6w23A7Z+U4I2dc6Pm584Ef94jUY2H8ZwDy0wYlVX0TPnyamdvqoRIb428SYWPCaSTdLx5WwX15EuR1ZFcmNpxZCM8K246KnkPRAN+qddanqm5DM+xuRjIvH45p1MeDwKGi7YhVtZMduz0KdQMwRPeqA1qnV7h6ERCEBsgDihySC9862dU6b8NNXv5+9C8qw0sINro4Q2xhV2px+bg8xsow== Arunaskilt"
 }
 
 variable "gcloud_project" {
@@ -44,6 +40,10 @@ variable "vpn_ip" {
 
 variable "cities_ip" {
   default = "163.172.184.153"
+}
+
+variable "elentari_world_enabled" {
+  default = true
 }
 
 variable "elentari_world_ip" {

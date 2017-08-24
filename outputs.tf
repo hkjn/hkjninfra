@@ -12,6 +12,10 @@ output "elentari_world_addr" {
   value = "${google_dns_record_set.elentari_world_web.name}"
 }
 
+output "elentari_world_ip" {
+  value = "${google_dns_record_set.elentari_world_web.rrdatas[0]}"
+}
+
 #
 # *.hkjn.me
 #
