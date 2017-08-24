@@ -1,33 +1,47 @@
 #!usr/bin/env python
 #
-# Create Ignition JSON for zg3
+# Create Ignition JSON for specified instance.
 #
 # TODO: Generalize.
 #
 import json
-import sys
 
-def get_config(host):
-    if host == 'zg1':
+
+INSTANCES = ('zg1', 'zg3')
+
+
+def get_shared_files():
+    """Return Ignition config for the shared files for all instances.
+    
+    Returns:
+        List of dict.
+    """
+    return [{
+        'filesystem': 'root',
+        'path': '/opt/bin/gather_facts',
+        'contents': {
+            'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts',
+            'verification': {
+                'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
+                },
+            },
+            'mode': 493,
+            'user': {},
+            'group': {},
+        },
+    ]
+
+
+def get_config(instance):
+    shared_files = get_shared_files()
+    if instance == 'zg1':
         return {
             "ignition": {
                 "version": "2.0.0",
                 "config": {}
             },
             "storage": {
-                "files": [{
-                    "filesystem": "root",
-                    "path": "/opt/bin/gather_facts",
-                    "contents": {
-                        "source": "https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts",
-                        "verification": {
-                            "hash": "sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8",
-                        },
-                    },
-                    "mode": 493,
-                    "user": {},
-                    "group": {},
-                }, {
+                "files": shared_files + [{
                                                         "filesystem": "root",
                                                                 "path": "/opt/bin/report_client",
                                                                         "contents": {
@@ -75,7 +89,7 @@ def get_config(host):
                         "networkd": {},
                           "passwd": {}
                           }
-    if host == 'zg3':
+    if instance == 'zg3':
         return {
             'ignition': { 'version': '2.0.0', 'config': {} },
             'storage': {
@@ -85,19 +99,7 @@ def get_config(host):
                         "format": "ext4"
                     },
                 }],
-                "files": [{
-                    "filesystem": "root",
-                    "path": "/opt/bin/gather_facts",
-                    "contents": {
-                        "source": "https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts",
-                        "verification": {
-                            "hash": "sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8",
-                        },
-                    },
-                    "mode": 493,
-                    "user": {},
-                    "group": {},
-                }, {
+                "files": shared_files + [{
                         "filesystem": "root",
                         "path": "/opt/bin/report_client",
                         "contents": {
@@ -176,6 +178,17 @@ def get_config(host):
         'networkd': {},
         'passwd': {},
     }
+    raise RuntimeError('Unknown instance {}'.format(instance))
+
+
+def run():
+    print('Generating Ignition JSON..')
+    for instance in INSTANCES:
+        json_path = 'bootstrap_{}.json'.format(instance)
+        print('Generating {}..'.format(json_path))
+        with open(json_path, 'w') as json_file:
+            json_file.write(json.dumps(get_config(instance)))
+
 
 if __name__ == '__main__':
-    print(json.dumps(get_config(sys.argv[1])))
+    run()

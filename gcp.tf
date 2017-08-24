@@ -59,9 +59,12 @@ resource "google_compute_firewall" "bitcoin" {
 }
 
 #
-# Storage.
+# Storage
 #
 
+#
+# Bitcoind storage disk
+#
 resource "google_compute_disk" "zg0_disk0" {
   name  = "test-disk"
   type  = "pd-ssd"
@@ -69,6 +72,9 @@ resource "google_compute_disk" "zg0_disk0" {
   size  = "200"
 }
 
+#
+# decenter.world persistent disk
+#
 resource "google_compute_disk" "zdisk1" {
   name  = "zdisk1"
   type  = "pd-ssd"
@@ -77,12 +83,12 @@ resource "google_compute_disk" "zdisk1" {
 }
 
 #
-# Instances.
+# GCP instances
 #
 
 resource "google_compute_instance" "zg1" {
   name         = "zg1"
-  description  = "Dev and build instance"
+  description  = "Dev and bitcoind"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
   tags = ["dev", "builder", "bitcoin", "http"]
@@ -97,8 +103,8 @@ resource "google_compute_instance" "zg1" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${var.gz1_pubkey}"
-     user-data = "${file("bootstrap_zg1.json")}"
+    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+    user-data = "${file("bootstrap_zg1.json")}"
   }
   # TODO: Set sshd port in bootstrap:
   # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
