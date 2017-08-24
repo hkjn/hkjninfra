@@ -45,7 +45,3 @@ variable "cities_ip" {
 variable "elentari_world_enabled" {
   default = true
 }
-
-variable "elentari_world_ip" {
-  default = "163.172.184.153"
-}
