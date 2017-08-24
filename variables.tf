@@ -43,5 +43,5 @@ variable "cities_ip" {
 }
 
 variable "elentari_world_enabled" {
-  default = true
+  default = false
 }
