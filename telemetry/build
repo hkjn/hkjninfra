@@ -6,7 +6,10 @@
 set -euo pipefail
 
 # declare BASE_IMAGE="hkjn/golang:$(uname -m)-tip"
-declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-zero-1.2.4"
+# Note: golang-1-2.4 has libz.so.1 error from protoc.
+# Note: zero-1.2.5 is defined in repo, but not pushed.. build broken?
+# Note: zero-1.1.3 builds binaries fine, but they are dynamically linked.
+declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-zero-1.1.3"
 # declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-golang-1.2.4"
 declare BUILD_DIR="$(mktemp -d telemetry_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

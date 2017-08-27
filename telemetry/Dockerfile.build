@@ -2,7 +2,7 @@ FROM {{ARG_FROM}}
 
 ENV GOOS=linux \
     CGO_ENABLED=0 \
-    USER=go
+    USER=user
 
 USER root
 RUN  apk add --no-cache musl-dev && \
@@ -14,9 +14,11 @@ COPY ["server", "./server"]
 COPY ["client", "./client"]
 COPY ["report", "./report"]
 COPY ["vendor", "./vendor"]
+RUN echo "FIXMEH: I am $(id) in $(pwd): $(ls -hsal)"
 USER root
 RUN chown -R ${USER}:${USER} /home/${USER}
 USER ${USER}
+RUN ls -hsal && pwd
 RUN mkdir -p /home/${USER}/bin/report && \
     echo "$(pwd) and $(ls -hsal /home/${USER}/src/hkjn.me/hkjninfra/telemetry)" && \
     protoc -I report/ report/report.proto --go_out=plugins=grpc:report && \
