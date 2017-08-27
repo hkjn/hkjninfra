@@ -31,7 +31,7 @@ def get_shared_files():
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
                 'verification': {
                     'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
                 },
