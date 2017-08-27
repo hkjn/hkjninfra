@@ -8,7 +8,7 @@ cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
 declare DECENTER_VERSION="1.1.2"
-declare DECENTER_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_WORLD}/decenter_world_x86_64",
+declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}",
 declare WORK_DIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
 
 fetch() {
@@ -54,4 +54,5 @@ install_bin "gather_facts"
 fetch "${INFRA_RELEASE_URL}/secretservice"
 install_bin "secretservice"
 
-fetch "${DECENTER_URL} decenter_world"
+fetch "${DECENTER_RELEASE_URL}/decenter_world_$(uname -m) decenter_world"
+fetch "${DECENTER_RELEASE_URL}/decenter_redirector_$(uname -m) decenter_redirector"
