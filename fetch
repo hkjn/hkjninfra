@@ -1,12 +1,14 @@
 #
-# Install the latest version of the binaries.
+# Download latest version of all binaries.
 #
 set -euo pipefail
 
 declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
-declare RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
+declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
+declare DECENTER_VERSION="1.1.2"
+declare DECENTER_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_WORLD}/decenter_world_x86_64",
 declare WORK_DIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
 
 fetch() {
@@ -28,20 +30,28 @@ fetch() {
 install_bin() {
 	local binary
 	binary="${1}"
-	cd "${WORK_DIR}"
+	local target
+	if [[ $? -eq 1 ]]; then
+		target="${1}"
+	else
+		target="${2}"
+	fi
+	cd ${WORK_DIR}
 	sudo mkdir -p /opt/bin/
-	sudo install "${binary}" /opt/bin/
-	info "Installed ${binary} ${VERSION}."
+	sudo install ${binary} /opt/bin/${target}
+	info "Installed ${binary} ${VERSION} to /opt/bin/${target}."
 }
 
 trap "rm -rf ${WORK_DIR}" EXIT
 source "logging.sh"
 rm -rf "${BASE}/${VERSION}.sha512"
 
-fetch "${RELEASE_URL}/tclient_$(uname -m)"
-fetch "${RELEASE_URL}/tserver_$(uname -m)"
-fetch "${RELEASE_URL}/gather_facts"
-install_bin "tclient_$(uname -m)"
+fetch "${INFRA_RELEASE_URL}/tclient_$(uname -m)"
+fetch "${INFRA_RELEASE_URL}/tserver_$(uname -m)"
+fetch "${INFRA_RELEASE_URL}/gather_facts"
+install_bin "tclient_$(uname -m)" "tclient"
 install_bin "gather_facts"
-fetch "${RELEASE_URL}/secretservice"
+fetch "${INFRA_RELEASE_URL}/secretservice"
 install_bin "secretservice"
+
+fetch "${DECENTER_URL} decenter_world"
