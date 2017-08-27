@@ -45,3 +45,5 @@ variable "cities_ip" {
 variable "elentari_world_enabled" {
   default = false
 }
+
+variable "git_commit" {}

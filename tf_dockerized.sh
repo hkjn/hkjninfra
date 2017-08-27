@@ -6,7 +6,7 @@ run_tf() {
 	fi
 	docker run --rm -it -v $(pwd):/home/tfuser \
 	           -e GOOGLE_APPLICATION_CREDENTIALS=/home/tfuser/.gcp/tf-dns-editor.json \
-	hkjn/terraform $@
+		   hkjn/terraform $@ -var 'git_commit='$(last_commit)''
 }
 
 alias tf='run_tf $@'
