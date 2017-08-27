@@ -33,7 +33,7 @@ def get_shared_files():
             'contents': {
                 'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
                 'verification': {
-                    'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
+                    'hash': 'sha512-cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
                 },
             },
             'mode': 493,
@@ -74,7 +74,7 @@ def get_shared_units():
     ]
 
 
-def get_config(instance):
+def get_config(instance, version='1.1.0'):
     """Returns Ignition config for the instance.
     
     Returns:
@@ -89,12 +89,28 @@ def get_config(instance):
             checksum, release_file = parts[0], parts[1]
             print('Checksum for {} {}: {}'.format(release_file, version,checksum))
 
+    print('Using checksums from version {}..'.format(version))
+    with open('{}.sha512'.format(version)) as checksum_file:
+        for line in checksum_file.readlines():
+            parts = line.split()
+            if len(parts) != 2:
+                raise RuntimeError('Invalid line in checksum file: {}'.format(line))
+            checksum, release_file = parts[0], parts[1]
+            print('Checksum for {} {}: {}'.format(release_file, version, checksum))
+
     shared_files = get_shared_files()
     shared_units = get_shared_units()
     files = []
     units = []
     filesystem = []
     if instance == 'zg1':
+#        files = [
+#            {
+#                'filesystem': 'root',
+#                'path': '/etc/systemd/system/docker.service.d/10-override-storage.conf',
+#                'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+#            },
+#        ]
         units = [
             {
 # TODO: Reenable the dropin to change storage for docker.
@@ -127,10 +143,10 @@ def get_config(instance):
                 "filesystem": "root",
                 "path": "/opt/bin/decenter_world",
                 "contents": {
-                "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
-                "verification": {
-                    'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
-                },
+                    "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
+                    "verification": {
+                        'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
+                    },
             },
                 "mode": 493,
                 "user": {},

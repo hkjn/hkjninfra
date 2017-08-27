@@ -16,7 +16,7 @@ declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd "${BASE_DIR}"
 
-echo "Building in ${BUILD_IMAGE}.."
+echo "Building from ${BUILD_IMAGE} in '${BUILD_DIR}'.."
 sed "s|{{ARG_FROM}}|${BUILD_IMAGE}|g" Dockerfile.build > ${BUILD_DIR}/Dockerfile
 cp -r {client,server,report,vendor} ${BUILD_DIR}
 echo "package main" > ${BUILD_DIR}/client/version.go

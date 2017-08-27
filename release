@@ -26,8 +26,10 @@ preflight_checks() {
 }
 
 build_binaries() {
-  info "Building binaries.."
+  info "Building telemetry binaries.."
   ./telemetry/build
+  info "Building secretservice binaries.."
+  ./secretservice/build
 }
 
 create_tag() {
@@ -95,4 +97,8 @@ cd telemetry/
 upload tclient_x86_64 ${URL}
 upload tserver_x86_64 ${URL}
 upload gather_facts ${URL}
+
+cd -
+cd secretservice
+upload secretservice ${URL}
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}."
