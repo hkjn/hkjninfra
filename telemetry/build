@@ -36,5 +36,9 @@ docker cp tbuild:/home/user/bin/ $(pwd)
 docker rm tbuild
 mv -v bin/tclient* bin/tserver* .
 echo "FIXMEH: tclient* should be statically linked here: $(ldd tclient*)"
+if ! ldd tclient* | grep static; then
+	echo "FATAL: tclient binaries should be statically linked" >&2
+	exit 1
+fi
 mv -v bin/report/*.pb.go report/
 rm -rf bin/

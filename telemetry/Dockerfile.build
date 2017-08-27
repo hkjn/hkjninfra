@@ -18,6 +18,7 @@ RUN echo "FIXMEH: I am $(id) in $(pwd): $(ls -hsal)"
 USER root
 RUN chown -R ${USER}:${USER} /home/${USER}
 USER ${USER}
+ENV GOOS=linux
 RUN ls -hsal && pwd
 RUN mkdir -p /home/${USER}/bin/report && \
     echo "$(pwd) and $(ls -hsal /home/${USER}/src/hkjn.me/hkjninfra/telemetry)" && \
