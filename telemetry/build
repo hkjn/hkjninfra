@@ -8,12 +8,12 @@ set -euo pipefail
 # declare BASE_IMAGE="hkjn/golang:$(uname -m)-tip"
 declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-zero-1.1.3"
 # declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-golang-1.2.4"
-declare BUILD_DIR="$(mktemp -d telemetry_build_XXXX)"
+declare BUILD_DIR="$(mktemp -d telemetry_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd "${BASE_DIR}"
 
-echo "Building in ${BUILD_IMAGE}.."
+echo "Building from ${BUILD_IMAGE} in '${BUILD_DIR}'.."
 sed "s|{{ARG_FROM}}|${BUILD_IMAGE}|g" Dockerfile.build > ${BUILD_DIR}/Dockerfile
 cp -r {client,server,report,vendor} ${BUILD_DIR}
 echo "package main" > ${BUILD_DIR}/client/version.go
