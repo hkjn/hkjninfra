@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#
+# Build secretservice binaries in Docker container.
+#
+
+set -euo pipefail
+
+declare BUILD_IMAGE="hkjn/workspace:$(uname -m )-zero-1.2.4"
+declare BUILD_DIR="$(mktemp -d secretservice_build_XXXX --tmpdir=/tmp)"
+declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+cd ${BASE_DIR}
+export BUILD_IMAGE=${BUILD_IMAGE}
+envsubst < Dockerfile.build > ${BUILD_DIR}/Dockerfile
+cp -r *.go vendor ${BUILD_DIR}/
+echo "Building from ${BUILD_IMAGE} in '${BASE_DIR}'.."
+docker build -t secretservice-build ${BUILD_DIR}
+echo "Running ssbuild container.."
+docker run --name ssbuild --entrypoint sh secretservice-build
+echo "Copying out binaries from container.."
+rm -rf bin/
+docker cp ssbuild:/home/go/bin $(pwd)
+docker rm ssbuild
+mv -v bin/secretservice* .
+rm -rf bin/
+

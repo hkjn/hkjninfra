@@ -1,0 +1,14 @@
+FROM $BUILD_IMAGE
+
+WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/
+ENV CGO_ENABLED=0
+COPY ["*.go", "./"]
+COPY ["vendor", "./vendor/"]
+
+USER go
+RUN go test && \
+    go install
+
+WORKDIR /home/go/bin/
+
+CMD echo "Binaries available in $(pwd): $(ls)"
