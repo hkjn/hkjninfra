@@ -1,35 +1,58 @@
 #
-# Install the latest version of the binaries.
+# Download latest version of all binaries.
 #
 set -euo pipefail
 
 declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
-declare RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare WORKDIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
-declare CLIENT_URL="${RELEASE_URL}/tclient_$(uname -m)"
-declare SERVER_URL="${RELEASE_URL}/tserver_$(uname -m)"
+declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
+declare DECENTER_VERSION="1.1.2"
+declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}",
+declare WORK_DIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
 
 fetch() {
 	local url
-	url="$1"
-	cd "${WORKDIR}"
+	url="${1}"
+	cd "${WORK_DIR}"
 	info "Fetching '${url}' ${VERSION}.."
-	debug "Working in '${WORKDIR}': $(pwd)"
-	debug "Sending request: curl -fSLo ${url}"
+	debug "Working in '${WORK_DIR}': $(pwd)"
+	debug "Sending request: curl --progress-bar -fSLO ${url}"
 	local checksum
 
-	checksum=$(curl --progress-bar -fSL ${url} \
+	checksum=$(curl --progress-bar -fSLO ${url} \
 	   | tee /dev/null | sha512sum | cut -d ' ' -f1)
 	local file
 	file=$(basename ${url})
 	echo "${checksum} ${file}" >> ${BASE}/${VERSION}.sha512
 }
 
-trap "rm -rf ${WORKDIR}" TERM
+install_bin() {
+	local binary
+	binary="${1}"
+	local target
+	if [[ $? -eq 1 ]]; then
+		target="${1}"
+	else
+		target="${2}"
+	fi
+	cd ${WORK_DIR}
+	sudo mkdir -p /opt/bin/
+	sudo install ${binary} /opt/bin/${target}
+	info "Installed ${binary} ${VERSION} to /opt/bin/${target}."
+}
+
+trap "rm -rf ${WORK_DIR}" EXIT
 source "logging.sh"
 rm -rf "${BASE}/${VERSION}.sha512"
-fetch "${RELEASE_URL}/tclient_$(uname -m)"
-fetch "${RELEASE_URL}/tserver_$(uname -m)"
-fetch "${RELEASE_URL}/gather_facts"
+
+fetch "${INFRA_RELEASE_URL}/tclient_$(uname -m)"
+fetch "${INFRA_RELEASE_URL}/tserver_$(uname -m)"
+fetch "${INFRA_RELEASE_URL}/gather_facts"
+install_bin "tclient_$(uname -m)" "tclient"
+install_bin "gather_facts"
+fetch "${INFRA_RELEASE_URL}/secretservice"
+install_bin "secretservice"
+
+fetch "${DECENTER_RELEASE_URL}/decenter_world_$(uname -m) decenter_world"
+fetch "${DECENTER_RELEASE_URL}/decenter_redirector_$(uname -m) decenter_redirector"
