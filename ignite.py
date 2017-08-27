@@ -80,14 +80,6 @@ def get_config(instance, version='1.1.0'):
     Returns:
         Dict with Ignition config.
     """
-    print('Using checksums from version {}..'.format(version))
-    with open('{}.sha512'.format(version)) as checksum_file:
-        for line in checksum_file.readlines():
-            parts = line.split()
-            if len(parts) != 2:
-                raise RuntimeError('Invalid line in checksum file: {}'.format(line))
-            checksum, release_file = parts[0], parts[1]
-            print('Checksum for {} {}: {}'.format(release_file, version,checksum))
 
     print('Using checksums from version {}..'.format(version))
     with open('{}.sha512'.format(version)) as checksum_file:
