@@ -31,21 +31,21 @@ def get_shared_files():
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
                 'verification': {
-                    'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
+                    'hash': 'sha512-cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
                 },
             },
             'mode': 493,
             'user': {},
             'group': {},
         }, {
-            'filesystem': "root",
-            'path': '/opt/bin/report_client',
+            'filesystem': 'root',
+            'path': '/opt/bin/tclient',
             'contents': {
-                'source': 'https://github.com/hkjn/junk/releases/download/1.5.10/report_client_x86_64',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
                 'verification': {
-                    'hash': 'sha512-f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08',
+                    'hash': 'sha512-cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e',
                 },
             },
             'mode': 493,
@@ -89,6 +89,7 @@ def get_config(instance, version='1.1.0'):
                 raise RuntimeError('Invalid line in checksum file: {}'.format(line))
             checksum, release_file = parts[0], parts[1]
             print('Checksum for {} {}: {}'.format(release_file, version, checksum))
+
     shared_files = get_shared_files()
     shared_units = get_shared_units()
     files = []
