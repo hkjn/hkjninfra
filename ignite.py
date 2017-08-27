@@ -40,12 +40,12 @@ def get_shared_files():
             'user': {},
             'group': {},
         }, {
-            'filesystem': "root",
+            'filesystem': 'root',
             'path': '/opt/bin/report_client',
             'contents': {
-                'source': 'https://github.com/hkjn/junk/releases/download/1.5.10/report_client_x86_64',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
                 'verification': {
-                    'hash': 'sha512-f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08',
+                    'hash': 'sha512-479235ae7b18698a9e8e5718226bb3b9023208590c55347c5102825c5d200c54b23b2cf476ede7b5f836e3d190f9d7c85db0524e78026668267c730f7683615f',
                 },
             },
             'mode': 493,
