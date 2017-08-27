@@ -18,6 +18,7 @@ RUN echo "FIXMEH: I am $(id) in $(pwd): $(ls -hsal)"
 USER root
 RUN chown -R ${USER}:${USER} /home/${USER}
 USER ${USER}
+ENV GOOS=linux
 RUN ls -hsal && pwd
 RUN mkdir -p /home/${USER}/bin/report && \
     echo "$(pwd) and $(ls -hsal /home/${USER}/src/hkjn.me/hkjninfra/telemetry)" && \
@@ -26,8 +27,9 @@ RUN mkdir -p /home/${USER}/bin/report && \
     cp report/*.pb.go /home/${USER}/bin/report/
 
 WORKDIR /home/${USER}/bin
-RUN GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client
-RUN GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
+RUN sh -c "GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client"
+RUN bash -c "ldd tclient_x86_64; if ! ldd tclient_x86_64 | grep static; then echo Not statically linked && exit 1; fi"
+RUN GOOS=linux GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
 # TODO: Reenable once image with alpine cross-compilation works
 # RUN GOARCH=arm go build -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
 # RUN GOARCH=arm go build -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server
