@@ -97,6 +97,15 @@ def get_config(instance):
     if instance == 'zg1':
         units = [
             {
+# TODO: Reenable the dropin to change storage for docker.
+#                'name': 'docker.service',
+#                'dropins': [
+#                    {
+#                        'name': '10_override_storage.conf',
+#                        'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+#                    },
+#                ],
+#            }, {
                 'name': 'bitcoin.service',
                 'enable': True,
                 'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c \"docker pull hkjn/bitcoin:$(uname -m)\"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c \" \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m)\"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
