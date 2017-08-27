@@ -7,29 +7,41 @@ declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare WORKDIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
-declare CLIENT_URL="${RELEASE_URL}/tclient_$(uname -m)"
-declare SERVER_URL="${RELEASE_URL}/tserver_$(uname -m)"
+declare WORK_DIR="$(mktemp -d hkjninfra_XXXX --tmpdir=/tmp)"
 
 fetch() {
 	local url
-	url="$1"
-	cd "${WORKDIR}"
+	url="${1}"
+	cd "${WORK_DIR}"
 	info "Fetching '${url}' ${VERSION}.."
-	debug "Working in '${WORKDIR}': $(pwd)"
-	debug "Sending request: curl -fSLo ${url}"
+	debug "Working in '${WORK_DIR}': $(pwd)"
+	debug "Sending request: curl --progress-bar -fSLO ${url}"
 	local checksum
 
-	checksum=$(curl --progress-bar -fSL ${url} \
+	checksum=$(curl --progress-bar -fSLO ${url} \
 	   | tee /dev/null | sha512sum | cut -d ' ' -f1)
 	local file
 	file=$(basename ${url})
 	echo "${checksum} ${file}" >> ${BASE}/${VERSION}.sha512
 }
 
-trap "rm -rf ${WORKDIR}" TERM
+install_bin() {
+	local binary
+	binary="${1}"
+	cd "${WORK_DIR}"
+	sudo mkdir -p /opt/bin/
+	sudo install "${binary}" /opt/bin/
+	info "Installed ${binary} ${VERSION}."
+}
+
+trap "rm -rf ${WORK_DIR}" EXIT
 source "logging.sh"
 rm -rf "${BASE}/${VERSION}.sha512"
+
 fetch "${RELEASE_URL}/tclient_$(uname -m)"
 fetch "${RELEASE_URL}/tserver_$(uname -m)"
 fetch "${RELEASE_URL}/gather_facts"
+install_bin "tclient_$(uname -m)"
+install_bin "gather_facts"
+fetch "${RELEASE_URL}/secretservice"
+install_bin "secretservice"
