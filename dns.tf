@@ -176,7 +176,7 @@ resource "google_dns_record_set" "elentari_world_web" {
   count = "${var.elentari_world_enabled ? 1 : 0}"
   name = "${google_dns_managed_zone.elentari_world_zone.dns_name}"
   type = "A"
-  ttl  = 300
+  ttl  = 100
   managed_zone = "${google_dns_managed_zone.elentari_world_zone.name}"
   rrdatas      = [
     "${google_compute_instance.elentari-world.network_interface.0.access_config.0.assigned_nat_ip}",
