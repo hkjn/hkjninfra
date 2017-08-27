@@ -74,21 +74,44 @@ def get_shared_units():
     ]
 
 
-def get_config(instance):
+def get_config(instance, version='1.1.0'):
     """Returns Ignition config for the instance.
     
     Returns:
         Dict with Ignition config.
     """
 
+    print('Using checksums from version {}..'.format(version))
+    with open('{}.sha512'.format(version)) as checksum_file:
+        for line in checksum_file.readlines():
+            parts = line.split()
+            if len(parts) != 2:
+                raise RuntimeError('Invalid line in checksum file: {}'.format(line))
+            checksum, release_file = parts[0], parts[1]
+            print('Checksum for {} {}: {}'.format(release_file, version, checksum))
     shared_files = get_shared_files()
     shared_units = get_shared_units()
     files = []
     units = []
     filesystem = []
     if instance == 'zg1':
+#        files = [
+#            {
+#                'filesystem': 'root',
+#                'path': '/etc/systemd/system/docker.service.d/10-override-storage.conf',
+#                'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+#            },
+#        ]
         units = [
             {
+                'name': 'docker.service',
+                'dropins': [
+                    {
+                        'name': '10_override_storage.conf',    
+                        'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+                    },
+                ],
+            }, {
                 'name': 'bitcoin.service',
                 'enable': True,
                 'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c \"docker pull hkjn/bitcoin:$(uname -m)\"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c \" \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m)\"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
@@ -110,10 +133,10 @@ def get_config(instance):
                 "filesystem": "root",
                 "path": "/opt/bin/decenter_world",
                 "contents": {
-                "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
-                "verification": {
-                    'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
-                },
+                    "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
+                    "verification": {
+                        'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
+                    },
             },
                 "mode": 493,
                 "user": {},
