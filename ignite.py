@@ -31,7 +31,7 @@ def get_shared_files():
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.0.6/gather_facts',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
                 'verification': {
                     'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
                 },
@@ -40,12 +40,12 @@ def get_shared_files():
             'user': {},
             'group': {},
         }, {
-            'filesystem': "root",
+            'filesystem': 'root',
             'path': '/opt/bin/report_client',
             'contents': {
-                'source': 'https://github.com/hkjn/junk/releases/download/1.5.10/report_client_x86_64',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
                 'verification': {
-                    'hash': 'sha512-f8eae52ca28902ef2f675378143464f7e0e4847066d2b2cc3170bb758819ede4aad8a4a641be1037cb924812de88f5ef0eb6db46a69810cd3dcf0c3ced6f4f08',
+                    'hash': 'sha512-479235ae7b18698a9e8e5718226bb3b9023208590c55347c5102825c5d200c54b23b2cf476ede7b5f836e3d190f9d7c85db0524e78026668267c730f7683615f',
                 },
             },
             'mode': 493,
@@ -74,12 +74,21 @@ def get_shared_units():
     ]
 
 
-def get_config(instance):
+def get_config(instance, version='1.1.0'):
     """Returns Ignition config for the instance.
     
     Returns:
         Dict with Ignition config.
     """
+
+    print('Using checksums from version {}..'.format(version))
+    with open('{}.sha512'.format(version)) as checksum_file:
+        for line in checksum_file.readlines():
+            parts = line.split()
+            if len(parts) != 2:
+                raise RuntimeError('Invalid line in checksum file: {}'.format(line))
+            checksum, release_file = parts[0], parts[1]
+            print('Checksum for {} {}: {}'.format(release_file, version, checksum))
 
     shared_files = get_shared_files()
     shared_units = get_shared_units()
@@ -87,8 +96,24 @@ def get_config(instance):
     units = []
     filesystem = []
     if instance == 'zg1':
+#        files = [
+#            {
+#                'filesystem': 'root',
+#                'path': '/etc/systemd/system/docker.service.d/10-override-storage.conf',
+#                'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+#            },
+#        ]
         units = [
             {
+# TODO: Reenable the dropin to change storage for docker.
+#                'name': 'docker.service',
+#                'dropins': [
+#                    {
+#                        'name': '10_override_storage.conf',
+#                        'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
+#                    },
+#                ],
+#            }, {
                 'name': 'bitcoin.service',
                 'enable': True,
                 'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c \"docker pull hkjn/bitcoin:$(uname -m)\"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c \" \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m)\"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
@@ -110,10 +135,10 @@ def get_config(instance):
                 "filesystem": "root",
                 "path": "/opt/bin/decenter_world",
                 "contents": {
-                "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
-                "verification": {
-                    'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
-                },
+                    "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
+                    "verification": {
+                        'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
+                    },
             },
                 "mode": 493,
                 "user": {},

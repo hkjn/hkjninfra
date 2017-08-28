@@ -2,29 +2,29 @@ FROM {{ARG_FROM}}
 
 ENV GOOS=linux \
     CGO_ENABLED=0 \
-    USER=user
+    USER=go
 
-USER root
-RUN  apk add --no-cache musl-dev && \
-     chown -R user:user /home/user
-USER $USER
-WORKDIR /home/$USER/src/hkjn.me/hkjninfra/telemetry
+USER ${USER}
+WORKDIR /home/${USER}/src/hkjn.me/hkjninfra/telemetry
 
 COPY ["server", "./server"]
 COPY ["client", "./client"]
 COPY ["report", "./report"]
 COPY ["vendor", "./vendor"]
-USER root
-RUN chown -R user:user /home/user
-USER user
-RUN mkdir -p /home/$USER/bin/report && \
-    echo "$(pwd) and $(ls -hsal /home/user/src/hkjn.me/hkjninfra/telemetry)" && \
-    protoc -I report/ report/report.proto --go_out=plugins=grpc:report && \
-    ls -hsal /home/user && \
-    cp report/*.pb.go /home/$USER/bin/report/
 
-WORKDIR /home/$USER/bin
-RUN GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client
+USER root
+RUN chown -R ${USER}:${USER} /home/${USER}
+USER ${USER}
+ENV GOOS=linux
+RUN ls -hsal && pwd
+RUN mkdir -p /home/${USER}/bin/report && \
+    echo "$(pwd) and $(ls -hsal /home/${USER}/src/hkjn.me/hkjninfra/telemetry)" && \
+    protoc -I report/ report/report.proto --go_out=plugins=grpc:report && \
+    ls -hsal /home/${USER} && \
+    cp report/*.pb.go /home/${USER}/bin/report/
+
+WORKDIR /home/${USER}/bin
+RUN sh -c "GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client"
 RUN GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
 # TODO: Reenable once image with alpine cross-compilation works
 # RUN GOARCH=arm go build -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
