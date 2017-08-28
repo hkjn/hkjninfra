@@ -4,9 +4,6 @@ ENV GOOS=linux \
     CGO_ENABLED=0 \
     USER=go
 
-USER root
-RUN  apk add --no-cache musl-dev && \
-     chown -R ${USER}:${USER} /home/${USER}
 USER ${USER}
 WORKDIR /home/${USER}/src/hkjn.me/hkjninfra/telemetry
 
