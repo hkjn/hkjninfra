@@ -9,9 +9,10 @@ class IgniteTest(unittest.TestCase):
     def test_get_config(self):
         self.maxDiff = None
         checksums = {
+            'gather_facts': '55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
             'tclient_x86_64': 'bf080645783c999f1a2bc8bc306660df8dbf496c6b7f98cf1d257d43c544050a7f4b6d1d9ba962c1d45fae8eb373061d3350e191edd73f1b44f01fc01448177f',
         }
-        got = ignite.get_config('zg1', '1.1.4', checksums)
+        got = ignite.get_config('zg1', '1.1.0', checksums)
         want = {
                 'ignition': {'config': {}, 'version': '2.0.0'},
                 'storage': {
@@ -40,7 +41,7 @@ class IgniteTest(unittest.TestCase):
                     },
                     {
                         'contents': {
-                            'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.4/tclient_x86_64',
+                            'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
                             'verification': {
                                 'hash': 'sha512-bf080645783c999f1a2bc8bc306660df8dbf496c6b7f98cf1d257d43c544050a7f4b6d1d9ba962c1d45fae8eb373061d3350e191edd73f1b44f01fc01448177f',
                             },

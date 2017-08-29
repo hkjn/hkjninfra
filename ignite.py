@@ -32,9 +32,9 @@ def get_shared_files(version, checksums):
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
                 'verification': {
-                    'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
+                    'hash': 'sha512-{}'.format(checksums['gather_facts']),
                 },
             },
             'mode': 493,
