@@ -10,50 +10,39 @@ INSTANCES = {
     'zg3': '1.1.4',
 }
 
+UPDATE_CONF_FILE = {
+    'filesystem': 'root',
+    'path': '/etc/coreos/update.conf',
+    'contents': {
+        'source': 'data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22',
+        'verification': {},
+    },
+    'mode': 420,
+    'user': {},
+    'group': {},
+}
 
-def get_shared_files(version, checksums):
-    """Return Ignition config for the shared files for all instances.
+
+def new_file(filename, checksum, url):
+    """Return Ignition config for specified file.
     
+    Args:
+        filename: str with filename under /opt/bin.
+        checksum: str with expected checksum of file.
     Returns:
-        List of dict of files.
+        Dict describing Ignitiion config for file.
     """
-    return [
-        {
-            'filesystem': 'root',
-            'path': '/etc/coreos/update.conf',
-            'contents': {
-                'source': 'data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22',
-                'verification': {},
-            },
-            'mode': 420,
-            'user': {},
-            'group': {},
-        }, {
-            'filesystem': 'root',
-            'path': '/opt/bin/gather_facts',
-            'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
-                'verification': {
-                    'hash': 'sha512-{}'.format(checksums['gather_facts']),
-                },
-            },
-            'mode': 493,
-            'user': {},
-            'group': {},
-        }, {
-            'filesystem': 'root',
-            'path': '/opt/bin/report_client',
-            'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version),
-                'verification': {
-                    'hash': 'sha512-{}'.format(checksums['tclient_x86_64'])
-                },
-            },
-            'mode': 493,
-            'user': {},
-            'group': {},
+    return {
+        'filesystem': 'root',
+        'path': '/opt/bin/{}'.format(filename),
+        'contents': {
+            'source': url,    
+            'verification': {'hash': 'sha512-{}'.format(checksum) },
         },
-    ]
+        'mode': 493,
+        'user': {},
+        'group': {},
+    }
 
 
 def get_shared_units():
@@ -106,7 +95,11 @@ def get_config(instance, version):
     for release_file in sorted(checksums):
         print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
 
-    shared_files = get_shared_files(version, checksums)
+    shared_files = [
+        UPDATE_CONF_FILE,
+        new_file('gather_facts', checksums['gather_facts'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version)),
+        new_file('report_client', checksums['tclient_x86_64'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version)),
+    ]
     shared_units = get_shared_units()
     files = []
     units = []
