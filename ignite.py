@@ -6,7 +6,7 @@ import json
 
 
 INSTANCES = {
-    'zg1': '1.1.0',
+    'zg1': '1.1.4',
     'zg3': '1.1.4',
 }
 
