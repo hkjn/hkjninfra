@@ -10,50 +10,39 @@ INSTANCES = {
     'zg3': '1.1.4',
 }
 
+UPDATE_CONF_FILE = {
+    'filesystem': 'root',
+    'path': '/etc/coreos/update.conf',
+    'contents': {
+        'source': 'data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22',
+        'verification': {},
+    },
+    'mode': 420,
+    'user': {},
+    'group': {},
+}
 
-def get_shared_files(version, checksums):
-    """Return Ignition config for the shared files for all instances.
+
+def new_file(filename, checksum, url):
+    """Return Ignition config for specified file.
     
+    Args:
+        filename: str with filename under /opt/bin.
+        checksum: str with expected checksum of file.
     Returns:
-        List of dict of files.
+        Dict describing Ignitiion config for file.
     """
-    return [
-        {
-            'filesystem': 'root',
-            'path': '/etc/coreos/update.conf',
-            'contents': {
-                'source': 'data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22',
-                'verification': {},
-            },
-            'mode': 420,
-            'user': {},
-            'group': {},
-        }, {
-            'filesystem': 'root',
-            'path': '/opt/bin/gather_facts',
-            'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
-                'verification': {
-                    'hash': 'sha512-{}'.format(checksums['gather_facts']),
-                },
-            },
-            'mode': 493,
-            'user': {},
-            'group': {},
-        }, {
-            'filesystem': 'root',
-            'path': '/opt/bin/report_client',
-            'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version),
-                'verification': {
-                'hash': 'sha512-{}'.format(checksums['tclient_x86_64']),
-                },
-            },
-            'mode': 493,
-            'user': {},
-            'group': {},
+    return {
+        'filesystem': 'root',
+        'path': '/opt/bin/{}'.format(filename),
+        'contents': {
+            'source': url,    
+            'verification': {'hash': 'sha512-{}'.format(checksum) },
         },
-    ]
+        'mode': 493,
+        'user': {},
+        'group': {},
+    }
 
 
 def get_shared_units():
@@ -62,20 +51,20 @@ def get_shared_units():
     Returns:
         List of dict of systemd units.
     """
-    rsc = ''
-    with open('units/report_client.service') as rc:
-        rcs = rc.read()
-    return [
-        {
-            'name': 'report_client.service',
+
+    units = ('report_client.service', 'report_client.timer')
+    unit_contents = {}
+    for unit in units:
+        with open('units/{}'.format(unit)) as unit_file:
+            unit_contents[unit] = unit_file.read()
+    result = []
+    for unit in sorted(unit_contents):
+        result.append({
+            'name': unit,
             'enable': True,
-            'contents': rcs,
-        }, {
-            'name': 'report_client.timer',
-            'enable': True,
-            'contents': '[Unit]\nDescription=Timer that starts report_client.service\n\n[Timer]\n# Run every 5 min.\nOnCalendar=*:0/5\nPersistent=true\n\n[Install]\nWantedBy=multi-user.target\n',
-        },
-    ]
+            'contents': unit_contents[unit],
+        })
+    return result
 
 
 def get_checksums(version):
@@ -96,11 +85,22 @@ def get_config(instance, version, checksums):
     Returns:
         Dict with Ignition config.
     """
-    shared_files = get_shared_files(version, checksums)
+    
+    shared_files = [
+        UPDATE_CONF_FILE,
+        new_file('gather_facts', checksums['gather_facts'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version)),
+        new_file('report_client', checksums['tclient_x86_64'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version)),
+    ]
     shared_units = get_shared_units()
     files = []
     units = []
     filesystem = []
+    #{
+    #    'mount': {
+    #        'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
+    #        'format': 'ext4',
+    #    },
+    #}]
     if instance == 'zg1':
 #        files = [
 #            {
@@ -130,12 +130,6 @@ def get_config(instance, version, checksums):
             },
         ]
     elif instance == 'zg3':
-        filesystems = [{
-            'mount': {
-                'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
-                'format': 'ext4',
-            },
-        }]
         files = [
             {
                 "filesystem": "root",
@@ -184,18 +178,18 @@ def get_config(instance, version, checksums):
     return {
         'ignition': {
             'version': '2.0.0',
-                'config': {}
-            },
-            'storage': {
-                'filesystem': filesystem,
-                'files': shared_files + files,
-            },
-            'systemd': {
-                'units': shared_units + units,
-                'networkd': {},
-                'passwd': {},
-            },
-        }
+            'config': {}
+        },
+        'storage': {
+            'filesystem': filesystem,
+            'files': shared_files + files,
+        },
+        'systemd': {
+            'units': shared_units + units,
+            'networkd': {},
+            'passwd': {},
+        },
+    }
 
 
 def run():
