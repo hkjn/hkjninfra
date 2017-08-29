@@ -103,7 +103,12 @@ def get_config(instance, version):
     shared_units = get_shared_units()
     files = []
     units = []
-    filesystem = []
+    filesystem = [{
+        'mount': {
+            'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
+            'format': 'ext4',
+        },
+    }]
     if instance == 'zg1':
 #        files = [
 #            {
@@ -133,12 +138,6 @@ def get_config(instance, version):
             },
         ]
     elif instance == 'zg3':
-        filesystems = [{
-            'mount': {
-                'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
-                'format': 'ext4',
-            },
-        }]
         files = [
             {
                 "filesystem": "root",
@@ -187,18 +186,18 @@ def get_config(instance, version):
     return {
         'ignition': {
             'version': '2.0.0',
-                'config': {}
-            },
-            'storage': {
-                'filesystem': filesystem,
-                'files': shared_files + files,
-            },
-            'systemd': {
-                'units': shared_units + units,
-                'networkd': {},
-                'passwd': {},
-            },
-        }
+            'config': {}
+        },
+        'storage': {
+            'filesystem': filesystem,
+            'files': shared_files + files,
+        },
+        'systemd': {
+            'units': shared_units + units,
+            'networkd': {},
+            'passwd': {},
+        },
+    }
 
 
 def run():
