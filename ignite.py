@@ -2,12 +2,13 @@
 #
 # Create Ignition JSON for specified instance.
 #
-# TODO: Generalize.
-#
 import json
 
 
-INSTANCES = ('zg1', 'zg3')
+INSTANCES = {
+    'zg1': '1.1.0',
+    'zg3': '1.1.4',
+}
 
 
 def get_shared_files():
@@ -61,11 +62,14 @@ def get_shared_units():
     Returns:
         List of dict of systemd units.
     """
+    rsc = ''
+    with open('units/report_client.service') as rc:
+        rcs = rc.read()
     return [
         {
             'name': 'report_client.service',
             'enable': True,
-            'contents': '[Unit]\nDescription=report client\nAfter=network-online.target\n\n[Service]\nEnvironment=PATH=/usr/bin/:/opt/bin:/bin\nEnvironment=REPORT_ADDR=mon.hkjn.me:50051\nEnvironment=REPORT_NAME=%H\nEnvironment=REPORT_FACTS_PATH=/etc/report_facts.json\nExecStartPre=-/bin/bash -c \"gather_facts > /etc/report_facts.json\"\nExecStart=/bin/bash -c report_client\n\n[Install]\nWantedBy=multi-user.target\n',
+            'contents': rcs,
         }, {
             'name': 'report_client.timer',
             'enable': True,
@@ -74,21 +78,33 @@ def get_shared_units():
     ]
 
 
-def get_config(instance, version='1.1.0'):
-    """Returns Ignition config for the instance.
-    
-    Returns:
-        Dict with Ignition config.
-    """
-
+def get_checksums(version):
     print('Using checksums from version {}..'.format(version))
+    result = {}
     with open('{}.sha512'.format(version)) as checksum_file:
         for line in checksum_file.readlines():
             parts = line.split()
             if len(parts) != 2:
                 raise RuntimeError('Invalid line in checksum file: {}'.format(line))
             checksum, release_file = parts[0], parts[1]
-            print('Checksum for {} {}: {}'.format(release_file, version, checksum))
+            result[release_file] = checksum
+    return result
+
+    
+def get_config(instance, version):
+    """Returns Ignition config for the instance.
+    
+    Returns:
+        Dict with Ignition config.
+    """
+
+    checksums = {}
+    try:
+        checksums = get_checksums(version)
+    except IOError as ioerr:
+        raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
+    for release_file in sorted(checksums):
+        print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
 
     shared_files = get_shared_files()
     shared_units = get_shared_units()
@@ -193,12 +209,16 @@ def get_config(instance, version='1.1.0'):
 
 
 def run():
+    """Generate Ignition JSON config files for all instances.
+    """
+
     print('Generating Ignition JSON..')
-    for instance in INSTANCES:
+    for instance in sorted(INSTANCES):
+        version = INSTANCES[instance]
         json_path = 'bootstrap_{}.json'.format(instance)
         print('Generating {}..'.format(json_path))
         with open(json_path, 'w') as json_file:
-            json_file.write(json.dumps(get_config(instance)))
+            json_file.write(json.dumps(get_config(instance, version)))
 
 
 if __name__ == '__main__':
