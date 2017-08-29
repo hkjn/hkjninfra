@@ -11,7 +11,7 @@ INSTANCES = {
 }
 
 
-def get_shared_files():
+def get_shared_files(version, checksums):
     """Return Ignition config for the shared files for all instances.
     
     Returns:
@@ -32,9 +32,9 @@ def get_shared_files():
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
                 'verification': {
-                    'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
+                    'hash': 'sha512-{}'.format(checksums['gather_facts']),
                 },
             },
             'mode': 493,
@@ -44,9 +44,9 @@ def get_shared_files():
             'filesystem': 'root',
             'path': '/opt/bin/report_client',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version),
                 'verification': {
-                    'hash': 'sha512-479235ae7b18698a9e8e5718226bb3b9023208590c55347c5102825c5d200c54b23b2cf476ede7b5f836e3d190f9d7c85db0524e78026668267c730f7683615f',
+                    'hash': 'sha512-{}'.format(checksums['tclient_x86_64'])
                 },
             },
             'mode': 493,
@@ -106,7 +106,7 @@ def get_config(instance, version):
     for release_file in sorted(checksums):
         print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
 
-    shared_files = get_shared_files()
+    shared_files = get_shared_files(version, checksums)
     shared_units = get_shared_units()
     files = []
     units = []
