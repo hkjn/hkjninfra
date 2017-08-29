@@ -52,6 +52,11 @@ class IgniteTest(unittest.TestCase):
                         'path': '/opt/bin/report_client',
                         'user': {
                         },
+                    },
+                    {
+                        'contents': '[Service]\nEnvironment="DOCKER_OPTS=-g /containers/docker -s overlay2"',
+                        'filesystem': 'root',
+                        'path': '/etc/systemd/system/docker.service.d/10-override-storage.conf',
                     }],
                     'filesystem': [],
                 },
