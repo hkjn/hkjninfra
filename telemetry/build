@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-1.3.1"
+declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-1.3.3"
 declare BUILD_DIR="$(mktemp -d telemetry_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -36,3 +36,4 @@ if ldd tclient*; then
 	exit 1
 fi
 mv -v bin/report/*.pb.go report/
+docker rmi telemetry_build
