@@ -6,7 +6,7 @@ import json
 
 
 INSTANCES = {
-    'zg1': '1.1.0',
+    'zg1': '1.1.4',
     'zg3': '1.1.4',
 }
 
@@ -68,7 +68,6 @@ def get_shared_units():
 
 
 def get_checksums(version):
-    print('Using checksums from version {}..'.format(version))
     result = {}
     with open('{}.sha512'.format(version)) as checksum_file:
         for line in checksum_file.readlines():
@@ -80,21 +79,13 @@ def get_checksums(version):
     return result
 
     
-def get_config(instance, version):
+def get_config(instance, version, checksums):
     """Returns Ignition config for the instance.
     
     Returns:
         Dict with Ignition config.
     """
-
-    checksums = {}
-    try:
-        checksums = get_checksums(version)
-    except IOError as ioerr:
-        raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
-    for release_file in sorted(checksums):
-        print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
-
+    
     shared_files = [
         UPDATE_CONF_FILE,
         new_file('gather_facts', checksums['gather_facts'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version)),
@@ -103,12 +94,13 @@ def get_config(instance, version):
     shared_units = get_shared_units()
     files = []
     units = []
-    filesystem = [{
-        'mount': {
-            'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
-            'format': 'ext4',
-        },
-    }]
+    filesystem = []
+    #{
+    #    'mount': {
+    #        'device': '/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1',
+    #        'format': 'ext4',
+    #    },
+    #}]
     if instance == 'zg1':
 #        files = [
 #            {
@@ -207,10 +199,19 @@ def run():
     print('Generating Ignition JSON..')
     for instance in sorted(INSTANCES):
         version = INSTANCES[instance]
+        checksums = {}
+        print('Using checksums from version {} for {}..'.format(version, instance))
+        try:
+            checksums = get_checksums(version)
+        except IOError as ioerr:
+            raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
+        for release_file in sorted(checksums):
+            print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
+
         json_path = 'bootstrap_{}.json'.format(instance)
         print('Generating {}..'.format(json_path))
         with open(json_path, 'w') as json_file:
-            json_file.write(json.dumps(get_config(instance, version)))
+            json_file.write(json.dumps(get_config(instance, version, checksums)))
 
 
 if __name__ == '__main__':
