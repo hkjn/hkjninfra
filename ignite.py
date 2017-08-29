@@ -62,20 +62,20 @@ def get_shared_units():
     Returns:
         List of dict of systemd units.
     """
-    rsc = ''
-    with open('units/report_client.service') as rc:
-        rcs = rc.read()
-    return [
-        {
-            'name': 'report_client.service',
+
+    units = ('report_client.service', 'report_client.timer')
+    unit_contents = {}
+    for unit in units:
+        with open('units/{}'.format(unit)) as unit_file:
+            unit_contents[unit] = unit_file.read()
+    result = []
+    for unit in sorted(unit_contents):
+        result.append({
+            'name': unit,
             'enable': True,
-            'contents': rcs,
-        }, {
-            'name': 'report_client.timer',
-            'enable': True,
-            'contents': '[Unit]\nDescription=Timer that starts report_client.service\n\n[Timer]\n# Run every 5 min.\nOnCalendar=*:0/5\nPersistent=true\n\n[Install]\nWantedBy=multi-user.target\n',
-        },
-    ]
+            'contents': unit_contents[unit],
+        })
+    return result
 
 
 def get_checksums(version):
