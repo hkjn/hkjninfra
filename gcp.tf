@@ -136,7 +136,7 @@ resource "google_compute_instance" "zg3" {
   }
   metadata {
     sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
-    buildCommit = "${var.git_commit}"
+    version = "${var.version}"
     user-data = "${file("bootstrap_zg3.json")}"
   }
 }

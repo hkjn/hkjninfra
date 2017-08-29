@@ -4,7 +4,7 @@ run_tf() {
 		echo "ignite.py failed, bailing." >&2
 		return
 	fi
-	echo "git_commit = \"$(./last_commit)\"" > terraform.tfvars
+	echo "version = \"$(cat VERSION)\"" > terraform.tfvars
 	docker run --rm -it -v $(pwd):/home/tfuser \
 	           -e GOOGLE_APPLICATION_CREDENTIALS=/home/tfuser/.gcp/tf-dns-editor.json \
 		   hkjn/terraform $@
