@@ -32,9 +32,9 @@ def get_shared_files(version, checksums):
             'filesystem': 'root',
             'path': '/opt/bin/gather_facts',
             'contents': {
-                'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
+                'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/gather_facts',
                 'verification': {
-                    'hash': 'sha512-{}'.format(checksums['gather_facts']),
+                    'hash': 'sha512-55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
                 },
             },
             'mode': 493,
@@ -46,7 +46,7 @@ def get_shared_files(version, checksums):
             'contents': {
                 'source': 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version),
                 'verification': {
-                    'hash': 'sha512-{}'.format(checksums['tclient_x86_64'])
+                'hash': 'sha512-{}'.format(checksums['tclient_x86_64']),
                 },
             },
             'mode': 493,
@@ -79,7 +79,6 @@ def get_shared_units():
 
 
 def get_checksums(version):
-    print('Using checksums from version {}..'.format(version))
     result = {}
     with open('{}.sha512'.format(version)) as checksum_file:
         for line in checksum_file.readlines():
@@ -91,21 +90,12 @@ def get_checksums(version):
     return result
 
     
-def get_config(instance, version):
+def get_config(instance, version, checksums):
     """Returns Ignition config for the instance.
     
     Returns:
         Dict with Ignition config.
     """
-
-    checksums = {}
-    try:
-        checksums = get_checksums(version)
-    except IOError as ioerr:
-        raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
-    for release_file in sorted(checksums):
-        print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
-
     shared_files = get_shared_files(version, checksums)
     shared_units = get_shared_units()
     files = []
@@ -215,10 +205,19 @@ def run():
     print('Generating Ignition JSON..')
     for instance in sorted(INSTANCES):
         version = INSTANCES[instance]
+        checksums = {}
+        print('Using checksums from version {} for {}..'.format(version, instance))
+        try:
+            checksums = get_checksums(version)
+        except IOError as ioerr:
+            raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
+        for release_file in sorted(checksums):
+            print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
+
         json_path = 'bootstrap_{}.json'.format(instance)
         print('Generating {}..'.format(json_path))
         with open(json_path, 'w') as json_file:
-            json_file.write(json.dumps(get_config(instance, version)))
+            json_file.write(json.dumps(get_config(instance, version, checksums)))
 
 
 if __name__ == '__main__':
