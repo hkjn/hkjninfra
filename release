@@ -101,4 +101,4 @@ upload gather_facts ${URL}
 cd -
 cd secretservice
 upload secretservice ${URL}
-slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}."
+slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}"

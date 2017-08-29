@@ -1,29 +1,22 @@
 FROM {{ARG_FROM}}
 
-ENV GOOS=linux \
-    CGO_ENABLED=0 \
-    USER=go
-
-USER ${USER}
-WORKDIR /home/${USER}/src/hkjn.me/hkjninfra/telemetry
-
+WORKDIR /home/go/src/hkjn.me/hkjninfra/telemetry/
+ENV CGO_ENABLED=0
 COPY ["server", "./server"]
 COPY ["client", "./client"]
 COPY ["report", "./report"]
 COPY ["vendor", "./vendor"]
 
 USER root
-RUN chown -R ${USER}:${USER} /home/${USER}
-USER ${USER}
+RUN chown -R go:go /home/go/src/hkjn.me
+USER go
 ENV GOOS=linux
 RUN ls -hsal && pwd
-RUN mkdir -p /home/${USER}/bin/report && \
-    echo "$(pwd) and $(ls -hsal /home/${USER}/src/hkjn.me/hkjninfra/telemetry)" && \
+RUN mkdir -p /home/go/bin/report && \
     protoc -I report/ report/report.proto --go_out=plugins=grpc:report && \
-    ls -hsal /home/${USER} && \
-    cp report/*.pb.go /home/${USER}/bin/report/
+    cp report/*.pb.go /home/go/bin/report/
 
-WORKDIR /home/${USER}/bin
+WORKDIR /home/go/bin
 RUN sh -c "GO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client"
 RUN GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
 # TODO: Reenable once image with alpine cross-compilation works

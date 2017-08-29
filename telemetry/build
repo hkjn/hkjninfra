@@ -36,4 +36,4 @@ if ldd tclient*; then
 	exit 1
 fi
 mv -v bin/report/*.pb.go report/
-docker rmi telemetry_build
+docker rmi telemetry-build
