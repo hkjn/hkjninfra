@@ -45,27 +45,24 @@ def new_file(filename, checksum, url):
     }
 
 
-def get_shared_units():
-    """Return Ignition config for the shared systemd units for all instances.
-    
+def new_unit(unit):
+    """Return Ignition config for a systemd unit.
+
+    Args:
+        unit: A str like 'bitcoin.service', identifying a file under units/.
     Returns:
-        List of dict of systemd units.
+        Dict with Ignition config for the systemd unit.
     """
 
-    units = ('report_client.service', 'report_client.timer')
-    unit_contents = {}
-    for unit in units:
-        with open('units/{}'.format(unit)) as unit_file:
-            unit_contents[unit] = unit_file.read()
-    result = []
-    for unit in sorted(unit_contents):
-        result.append({
-            'name': unit,
-            'enable': True,
-            'contents': unit_contents[unit],
-        })
-    return result
-
+    unit_contents = ''
+    with open('units/{}'.format(unit)) as unit_file:
+        unit_contents = unit_file.read()
+    return {
+        'name': unit,
+        'enable': True,
+        'contents': unit_contents,
+    }
+    
 
 def get_checksums(version):
     result = {}
@@ -83,6 +80,7 @@ def get_config(instance, version, checksums):
     """Returns Ignition config for the instance.
     
     Returns:
+
         Dict with Ignition config.
     """
     
@@ -91,7 +89,10 @@ def get_config(instance, version, checksums):
         new_file('gather_facts', checksums['gather_facts'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version)),
         new_file('report_client', checksums['tclient_x86_64'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version)),
     ]
-    shared_units = get_shared_units()
+    shared_units = [
+        new_unit('report_client.service'),
+        new_unit('report_client.timer'),
+    ]
     files = []
     units = []
     filesystem = []
@@ -106,15 +107,9 @@ def get_config(instance, version, checksums):
                         'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
                     },
                 ],
-            }, {
-                'name': 'bitcoin.service',
-                'enable': True,
-                'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c \"docker pull hkjn/bitcoin:$(uname -m)\"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c \" \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m)\"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
-            }, {
-                'name': 'containers.mount',
-                'enable': True,
-                'contents': '[Mount]\nWhat=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1-part1\nWhere=/containers\nType=xfs\n\n[Install]\nRequiredBy=local-fs.target\n',
             },
+            new_unit('bitcoin.service'),
+            new_unit('containers.mount'),
         ]
     elif instance == 'zg3':
         files = [

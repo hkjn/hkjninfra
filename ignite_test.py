@@ -60,7 +60,7 @@ class IgniteTest(unittest.TestCase):
                     'passwd': {},
                     'units': [
                         {
-                            'contents': '[Unit]\nDescription=report client\nAfter=network-online.target\n\n[Service]\nEnvironment=PATH=/usr/bin/:/opt/bin:/bin\nEnvironment=REPORT_ADDR=mon.hkjn.me:50051\nEnvironment=REPORT_NAME=%H\nEnvironment=REPORT_FACTS_PATH=/etc/report_facts.json\nExecStartPre=-/bin/bash -c "gather_facts > /etc/report_facts.json"\nExecStart=/bin/bash -c report_client\n\n[Install]\nWantedBy=multi-user.target\n\n',
+                            'contents': '[Unit]\nDescription=report client\nAfter=network-online.target\n\n[Service]\nEnvironment=PATH=/usr/bin/:/opt/bin:/bin\nEnvironment=REPORT_ADDR=mon.hkjn.me:50051\nEnvironment=REPORT_FACTS_PATH=/etc/report_facts.json\nExecStartPre=-/bin/bash -c "gather_facts > /etc/report_facts.json"\nExecStart=/bin/bash -c report_client\n\n[Install]\nWantedBy=multi-user.target\n\n',
                             'enable': True,
                             'name': 'report_client.service',
                         }, {
