@@ -112,10 +112,32 @@ def get_config(instance, version, checksums):
             new_unit('containers.mount'),
         ]
     elif instance == 'zg3':
-        decenter_version = '1.1.3'
         files = [
-            new_file('decenter_world', checksums['decenter_world_x86_64'], 'https://github.com/hkjn/decenter_world/releases/download/{}/decenter_world_x86_64'.format(decenter_version)),
-            new_file('decenter_redirector', checksums['decenter_redirector_x86_64'], 'https://github.com/hkjn/decenter_world/releases/download/{}/decenter_redirector_x86_64'.format(decenter_version)),
+            {
+                "filesystem": "root",
+                "path": "/opt/bin/decenter_world",
+                "contents": {
+                    "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.2/decenter_world_x86_64",
+                    "verification": {
+                        'hash': 'sha512-ed0fa9f29b504fb30ce7c33afc743e636bccffa6a9bd5630f9fd374cf6076725e6d44d8e2b11ed82f849de90cf009199bf2f19aa803ffd1830ddd75a837aeb06',
+                    },
+            },
+                "mode": 493,
+                "user": {},
+                "group": {},
+            }, {
+                "filesystem": "root",
+                "path": "/opt/bin/decenter_redirector",
+                "contents": {
+                    "source": "https://github.com/hkjn/decenter.world/releases/download/1.1.1/decenter_redirector_x86_64",
+                    "verification": {
+                        "hash": "sha512-8026412bcc856bb073e01a5b984e0a2161049b76e575cfc506bf733a03ca70ed2fffe0a83d269a578936a545066500603b3a86c9e6a47905376108b8af41837e",
+                    },
+                },
+                "mode": 493,
+                "user": {},
+                "group": {},
+            },
         ]
         units = [
             {
