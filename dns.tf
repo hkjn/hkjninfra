@@ -156,7 +156,7 @@ resource "google_dns_managed_zone" "decenter_world_zone" {
 resource "google_dns_record_set" "decenter_world" {
   name = "${google_dns_managed_zone.decenter_world_zone.dns_name}"
   type = "A"
-  ttl  = 300
+  ttl  = 60
   managed_zone = "${google_dns_managed_zone.decenter_world_zone.name}"
   rrdatas = [
     "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
