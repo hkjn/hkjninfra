@@ -42,7 +42,7 @@ install_bin() {
 	cd ${WORK_DIR}
 	sudo mkdir -p /opt/bin/
 	sudo install ${binary} /opt/bin/${target}
-	info "Installed ${binary} ${VERSION} to /opt/bin/${target}."
+	info "Installed ${binary} v${VERSION} to /opt/bin/${target}."
 }
 
 source "logging.sh"
@@ -60,3 +60,5 @@ install_bin secretservice
 
 fetch ${DECENTER_RELEASE_URL}/decenter_world_x86_64
 fetch ${DECENTER_RELEASE_URL}/decenter_redirector_x86_64
+info "Checksums for v${VERSION}:"
+cat ${BASE}/${VERSION}.sha512
