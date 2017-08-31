@@ -7,7 +7,7 @@ declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare DECENTER_VERSION="1.1.3"
+declare DECENTER_VERSION="1.1.2"
 declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}"
 declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
 
@@ -21,9 +21,10 @@ fetch() {
 		info "Fetching '${url}' ${VERSION}.."
 		debug "Sending request: curl --progress-bar -fSLO ${url}"
 		local checksum
-		checksum=$(curl --progress-bar -fSLO ${url} \
-	   	| tee /dev/null | sha512sum | cut -d ' ' -f1)
-		echo "${checksum} ${binary}" >> ${BASE}/${VERSION}.sha512
+		curl --progress-bar -fSLO ${url}
+		checksum=$(sha512sum ${binary})
+		debug "Checksum for '${url}' was ${checksum}"
+		echo "${checksum}" >> ${BASE}/${VERSION}.sha512
 	else
 		info "File '${binary}' already existed. Getting checksum.."
 		sha512sum ${binary} >> ${BASE}/${VERSION}.sha512 
