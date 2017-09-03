@@ -122,7 +122,7 @@ def get_config(instance, version, checksums):
             new_file(
                 'decenter_redirector',
                 checksums['decenter_redirector_x86_64'],
-                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_redirector_x86_64'.format('1.1.1'),
+                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_redirector_x86_64'.format(decenter_version),
             ),
         ]
         units = [
