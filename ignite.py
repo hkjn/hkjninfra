@@ -112,7 +112,7 @@ def get_config(instance, version, checksums):
             new_unit('containers.mount'),
         ]
     elif instance == 'zg3':
-        decenter_version = '1.1.2'
+        decenter_version = '1.1.3'
         files = [
             new_file(
                 'decenter_world',
