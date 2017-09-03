@@ -114,8 +114,16 @@ def get_config(instance, version, checksums):
     elif instance == 'zg3':
         decenter_version = '1.1.2'
         files = [
-            new_file('decenter_world', checksums['decenter_world_x86_64'], 'https://github.com/hkjn/decenter_world/releases/download/{}/decenter_world_x86_64'.format(decenter_version)),
-            new_file('decenter_redirector', checksums['decenter_redirector_x86_64'], 'https://github.com/hkjn/decenter_world/releases/download/{}/decenter_redirector_x86_64'.format(decenter_version)),
+            new_file(
+                'decenter_world',
+                checksums['decenter_world_x86_64'],
+                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_world_x86_64'.format(decenter_version),
+            ),
+            new_file(
+                'decenter_redirector',
+                checksums['decenter_redirector_x86_64'],
+                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_redirector_x86_64'.format('1.1.1'),
+            ),
         ]
         units = [
             {
