@@ -7,7 +7,7 @@ import json
 
 INSTANCES = {
     'zg1': '1.1.4',
-    'zg3': '1.2.3',
+    'zg3': '1.2.4',
 }
 
 UPDATE_CONF_FILE = {
@@ -112,7 +112,7 @@ def get_config(instance, version, checksums):
             new_unit('containers.mount'),
         ]
     elif instance == 'zg3':
-        decenter_version = '1.1.4'
+        decenter_version = '1.1.5'
         files = [
             new_file(
                 'decenter_world',
