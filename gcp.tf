@@ -154,6 +154,6 @@ resource "google_compute_instance" "elentari-world" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${var.aruna_pubkey}"
+    sshKeys = "core:${var.aruna_pubkey_kilt2}"
   }
 }
