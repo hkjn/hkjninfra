@@ -192,7 +192,7 @@ def run():
         for release_file in sorted(checksums):
             print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
 
-        json_path = 'bootstrap_{}.json'.format(instance)
+        json_path = 'bootstrap/bootstrap_{}.json'.format(instance)
         print('Generating {}..'.format(json_path))
         with open(json_path, 'w') as json_file:
             json_file.write(json.dumps(get_config(instance, version, checksums)))

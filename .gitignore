@@ -5,6 +5,5 @@ terraform.tfstate.backup
 .terraform.d/
 .terraform/
 ?.?.?.sha512
-bootstrap_*.json
 terraform.tfvars
 telemetry/bin/

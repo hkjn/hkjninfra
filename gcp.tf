@@ -104,7 +104,7 @@ resource "google_compute_instance" "zg1" {
   }
   metadata {
     sshKeys = "core:${var.zg0_pubkey}"
-    user-data = "${file("bootstrap_zg1.json")}"
+    user-data = "${file("bootstrap/bootstrap_zg1.json")}"
   }
   # TODO: Set sshd port in bootstrap:
   # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
@@ -137,7 +137,7 @@ resource "google_compute_instance" "zg3" {
   metadata {
     sshKeys = "core:${var.zg0_pubkey}"
     version = "${var.version}"
-    user-data = "${file("bootstrap_zg3.json")}"
+    user-data = "${file("bootstrap/bootstrap_zg3.json")}"
   }
 }
 
