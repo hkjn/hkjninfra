@@ -103,7 +103,7 @@ resource "google_compute_instance" "zg1" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+    sshKeys = "core:$var.zg0_pubkey}"
     user-data = "${file("bootstrap_zg1.json")}"
   }
   # TODO: Set sshd port in bootstrap:
@@ -120,7 +120,7 @@ resource "google_compute_instance" "zg1" {
 resource "google_compute_instance" "zg3" {
   count = 1
   name         = "zg3"
-  description  = "Bootstrap test"
+  description  = "decenter.world host"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
   tags = ["dev", "http"]
@@ -135,9 +135,28 @@ resource "google_compute_instance" "zg3" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${file(".keys/gz3_id_rsa.pub")}"
+    sshKeys = "core:$var.zg0_pubkey}"
     version = "${var.version}"
     user-data = "${file("bootstrap_zg3.json")}"
+  }
+}
+
+resource "google_compute_instance" "builder" {
+  count        = "${var.builder_enabled ? 1 : 0}"
+  name         = "builder"
+  description  = "Temporary builder server."
+  machine_type = "n1-standard-8"
+  zone         = "europe-west3-b"
+  tags         = ["dev", "http"]
+  disk { image = "${var.coreos_alpha_image}" }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.zg0_pubkey}"
+    version = "${var.version}"
+    user-data = "${file("bootstrap_builder.json")}"
   }
 }
 
