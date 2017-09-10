@@ -103,7 +103,7 @@ resource "google_compute_instance" "zg1" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:$var.zg0_pubkey}"
+    sshKeys = "core:${var.zg0_pubkey}"
     user-data = "${file("bootstrap_zg1.json")}"
   }
   # TODO: Set sshd port in bootstrap:
@@ -135,7 +135,7 @@ resource "google_compute_instance" "zg3" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:$var.zg0_pubkey}"
+    sshKeys = "core:${var.zg0_pubkey}"
     version = "${var.version}"
     user-data = "${file("bootstrap_zg3.json")}"
   }
