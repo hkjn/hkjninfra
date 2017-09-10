@@ -5,6 +5,8 @@ run_tf() {
 		return
 	fi
 	echo "version = \"$(cat VERSION)\"" > terraform.tfvars
+	# TODO: Could store user-data fields with 'tf output', then
+	# diff the before / after and show better diffs.
 	docker run --rm -it -v $(pwd):/home/tfuser \
 	           -e GOOGLE_APPLICATION_CREDENTIALS=/home/tfuser/.gcp/tf-dns-editor.json \
 		   hkjn/terraform $@
