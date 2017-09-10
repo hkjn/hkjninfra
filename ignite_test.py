@@ -70,7 +70,7 @@ class IgniteTest(unittest.TestCase):
                         }, {
                             'dropins': [
                                 {
-                                    'contents': '[Service]\nEnvironment="DOCKER_OPTS=-g /containers/docker -s overlay2"',
+                                    'contents': '[Service]\nEnvironment="DOCKER_OPTS=-g /containers/docker -s overlay2"\n',
                                     'name': '10_override_storage.conf',
                                 },
                             ],

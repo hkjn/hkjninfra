@@ -8,7 +8,9 @@ import json
 INSTANCES = {
     'zg1': '1.1.4',
     'zg3': '1.2.4',
+    #'builder': '1.2.5',
 }
+
 
 UPDATE_CONF_FILE = {
     'filesystem': 'root',
@@ -62,7 +64,29 @@ def new_unit(unit):
         'enable': True,
         'contents': unit_contents,
     }
-    
+
+
+def new_unit_dropin(unit, dropin_name):
+    """Return Ignition config for a systemd dropin for a unit.
+
+    Args:
+        unit: A str like 'bitcoin.service', identifying the unit of the dropin.
+        dropin_name: A str like '10_override_storage.conf', identifying the name of the dropin.
+    Returns:
+        Dict with Ignition config for the systemd unit dropin.
+    """
+
+    dropin_contents = ''
+    with open('units/{}'.format(dropin_name)) as dropin_file:
+        dropin_contents = dropin_file.read()
+    return {
+        'name': unit,
+        'dropins': [{
+            'name': dropin_name,
+            'contents': dropin_contents,
+        }]
+    }
+
 
 def get_checksums(version):
     result = {}
@@ -99,15 +123,7 @@ def get_config(instance, version, checksums):
     if instance == 'zg1':
         files = []
         units = [
-            {
-                'name': 'docker.service',
-                'dropins': [
-                    {
-                        'name': '10_override_storage.conf',
-                        'contents': '[Service]\nEnvironment=\"DOCKER_OPTS=-g /containers/docker -s overlay2\"',
-                    },
-                ],
-            },
+            new_unit_dropin('docker.service', '10_override_storage.conf'),
             new_unit('bitcoin.service'),
             new_unit('containers.mount'),
         ]
