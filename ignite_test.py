@@ -12,7 +12,7 @@ class IgniteTest(unittest.TestCase):
             'gather_facts': '55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
             'tclient_x86_64': 'bf080645783c999f1a2bc8bc306660df8dbf496c6b7f98cf1d257d43c544050a7f4b6d1d9ba962c1d45fae8eb373061d3350e191edd73f1b44f01fc01448177f',
         }
-        got = ignite.get_config('zg1', '1.1.0', checksums)
+        got = ignite.get_config('core', '1.1.0', checksums)
         want = {
                 'ignition': {'config': {}, 'version': '2.0.0'},
                 'storage': {
@@ -76,7 +76,7 @@ class IgniteTest(unittest.TestCase):
                             ],
                             'name': 'docker.service',
                         }, {
-                            'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c "docker pull hkjn/bitcoin:$(uname -m)"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c " \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m) -dbcache=100 -printtoconsole"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
+                            'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c "docker pull hkjn/bitcoin:$(uname -m)"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c " \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m) -dbcache=500 -printtoconsole"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
                             'enable': True,
                             'name': 'bitcoin.service',
                         }, {

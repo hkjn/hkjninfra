@@ -86,8 +86,8 @@ resource "google_dns_record_set" "hkjn_cities" {
   rrdatas      = ["${var.cities_ip}"]
 }
 
-resource "google_dns_record_set" "hkjn_iosdev" {
-  name = "iosdev.${google_dns_managed_zone.hkjn_zone.dns_name}"
+resource "google_dns_record_set" "hkjn_core" {
+  name = "core.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
