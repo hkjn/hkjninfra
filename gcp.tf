@@ -88,7 +88,7 @@ resource "google_compute_disk" "zdisk1" {
 
 resource "google_compute_instance" "zg1" {
   name         = "zg1"
-  description  = "Dev and bitcoind"
+  description  = "Bitcoin Core node"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
   tags = ["dev", "builder", "bitcoin", "http"]
@@ -103,6 +103,7 @@ resource "google_compute_instance" "zg1" {
     access_config {} # Ephemeral IP
   }
   metadata {
+    version = "${var.version}"
     sshKeys = "core:${var.zg0_pubkey}"
     user-data = "${file("bootstrap/bootstrap_zg1.json")}"
   }
@@ -120,7 +121,7 @@ resource "google_compute_instance" "zg1" {
 resource "google_compute_instance" "zg3" {
   count = 1
   name         = "zg3"
-  description  = "decenter.world host"
+  description  = "decenter.world"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
   tags = ["dev", "http"]

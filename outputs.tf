@@ -28,8 +28,8 @@ output "hkjn_addr_cities" {
   value = "${google_dns_record_set.hkjn_cities.name}"
 }
 
-output "hkjn_addr_iosdev" {
-  value = "${google_dns_record_set.hkjn_iosdev.name}"
+output "hkjn_addr_core" {
+  value = "${google_dns_record_set.hkjn_core.name}"
 }
 
 output "hkjn_addr_mon" {
