@@ -56,6 +56,10 @@ output "hkjn_ip_zg1" {
   value = "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}"
 }
 
+output "hkjn_ignite_json_zg1" {
+  value = "${google_compute_instance.zg1.metadata.user-data}"
+}
+
 output "hkjn_ip_zg3" {
   value = "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}"
 }
