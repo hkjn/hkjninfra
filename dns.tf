@@ -92,7 +92,7 @@ resource "google_dns_record_set" "hkjn_core" {
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}",
+    "${google_compute_instance.core.network_interface.0.access_config.0.assigned_nat_ip}",
   ]
 }
 
@@ -159,7 +159,7 @@ resource "google_dns_record_set" "decenter_world" {
   ttl  = 60
   managed_zone = "${google_dns_managed_zone.decenter_world_zone.name}"
   rrdatas = [
-    "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
+    "${google_compute_instance.decenter-world.network_interface.0.access_config.0.assigned_nat_ip}",
   ]
 }
 
@@ -223,25 +223,3 @@ resource "google_dns_record_set" "hkjn_zs10" {
     "163.172.184.153",
   ]
 }
-
-resource "google_dns_record_set" "hkjn_zg1" {
-  name = "zg1.${google_dns_managed_zone.hkjn_zone.dns_name}"
-  type = "A"
-  ttl  = 300
-  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas = [
-    "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}",
-  ]
-}
-
-
-resource "google_dns_record_set" "hkjn_zg3" {
-  name = "zg3.${google_dns_managed_zone.hkjn_zone.dns_name}"
-  type = "A"
-  ttl  = 300
-  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas = [
-    "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}",
-  ]
-}
-

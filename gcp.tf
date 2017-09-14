@@ -86,8 +86,8 @@ resource "google_compute_disk" "zdisk1" {
 # GCP instances
 #
 
-resource "google_compute_instance" "zg1" {
-  name         = "zg1"
+resource "google_compute_instance" "core" {
+  name         = "core"
   description  = "Bitcoin Core node"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
@@ -105,7 +105,7 @@ resource "google_compute_instance" "zg1" {
   metadata {
     version = "${var.version}"
     sshKeys = "core:${var.zg0_pubkey}"
-    user-data = "${file("bootstrap/bootstrap_zg1.json")}"
+    user-data = "${file("bootstrap/bootstrap_core.json")}"
   }
   # TODO: Set sshd port in bootstrap:
   # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
@@ -118,10 +118,10 @@ resource "google_compute_instance" "zg1" {
   }
 }
 
-resource "google_compute_instance" "zg3" {
+resource "google_compute_instance" "decenter-world" {
   count = 1
-  name         = "zg3"
-  description  = "decenter.world"
+  name         = "decenter-world"
+  description  = "decenter.world server"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
   tags = ["dev", "http"]
@@ -138,7 +138,7 @@ resource "google_compute_instance" "zg3" {
   metadata {
     sshKeys = "core:${var.zg0_pubkey}"
     version = "${var.version}"
-    user-data = "${file("bootstrap/bootstrap_zg3.json")}"
+    user-data = "${file("bootstrap/bootstrap_decenter_world.json")}"
   }
 }
 

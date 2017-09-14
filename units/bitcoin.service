@@ -12,7 +12,7 @@ ExecStart=/bin/bash -c " \
              --memory=1050m \
              --cpu-shares=128 \
              -v /containers/bitcoin:/home/bitcoin/.bitcoin \
-             hkjn/bitcoin:$(uname -m) -dbcache=100 -printtoconsole"
+             hkjn/bitcoin:$(uname -m) -dbcache=500 -printtoconsole"
 Restart=always
 
 [Install]

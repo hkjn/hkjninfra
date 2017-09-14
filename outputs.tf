@@ -52,16 +52,16 @@ output "hkjn_ip_zs10" {
   value = "${google_dns_record_set.hkjn_zs10.rrdatas[0]}"
 }
 
-output "hkjn_ip_zg1" {
-  value = "${google_compute_instance.zg1.network_interface.0.access_config.0.assigned_nat_ip}"
+output "hkjn_ip_core" {
+  value = "${google_compute_instance.core.network_interface.0.access_config.0.assigned_nat_ip}"
 }
 
-output "hkjn_ignite_json_zg1" {
-  value = "${google_compute_instance.zg1.metadata.user-data}"
+output "hkjn_ignite_json_core" {
+  value = "${google_compute_instance.core.metadata.user-data}"
 }
 
-output "hkjn_ip_zg3" {
-  value = "${google_compute_instance.zg3.network_interface.0.access_config.0.assigned_nat_ip}"
+output "hkjn_ip_decenter_world3" {
+  value = "${google_compute_instance.decenter-world.network_interface.0.access_config.0.assigned_nat_ip}"
 }
 
 output "hkjn_ip_web" {

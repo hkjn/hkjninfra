@@ -6,8 +6,8 @@ import json
 
 
 INSTANCES = {
-    'zg1': '1.1.4',
-    'zg3': '1.2.4',
+    'core': '1.1.4',
+    'decenter_world': '1.2.4',
     #'builder': '1.2.5',
 }
 
@@ -120,14 +120,14 @@ def get_config(instance, version, checksums):
     files = []
     units = []
     filesystem = []
-    if instance == 'zg1':
+    if instance == 'core':
         files = []
         units = [
             new_unit_dropin('docker.service', '10_override_storage.conf'),
             new_unit('bitcoin.service'),
             new_unit('containers.mount'),
         ]
-    elif instance == 'zg3':
+    elif instance == 'decenter_world':
         decenter_version = '1.1.5'
         files = [
             new_file(
