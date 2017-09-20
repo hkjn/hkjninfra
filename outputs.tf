@@ -24,6 +24,10 @@ output "hkjn_addr_admin" {
   value = "${google_dns_record_set.hkjn_admin.name}"
 }
 
+output "hkjn_addr_admin1" {
+  value = "${google_dns_record_set.hkjn_admin1.name}"
+}
+
 output "hkjn_addr_cities" {
   value = "${google_dns_record_set.hkjn_cities.name}"
 }
