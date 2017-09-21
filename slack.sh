@@ -3,10 +3,14 @@
 # Slack library for bash scripts.
 #
 
-declare SLACKTOKEN="${SLACKTOKEN:-$(cat /etc/secrets/slack/token.asc)}"
-declare SLACKURL="https://hooks.slack.com/services"
+declare SLACK_TOKEN="${SLACK_TOKEN:-""}"
+declare SLACK_URL="https://hooks.slack.com/services"
 
 slacksend() {
+	if [[ ! "${SLACK_TOKEN}" ]]; then
+		echo "No SLACK_TOKEN available in environment." >&2
+		return 1
+	fi
 	local message
 	message="${1}"
 
@@ -19,7 +23,7 @@ slacksend() {
 	local response
 	response=$(curl -s -H 'Content-type: application/json' \
 	                --data "{\"text\":\"$message\"}" \
-			${SLACKURL}/${SLACKTOKEN})
+			${SLACK_URL}/${SLACK_TOKEN})
 
     	if [[ "${response}" != "ok" ]]; then
 	      echo "Bad Slack response: '${response}'" >&2
