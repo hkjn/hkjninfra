@@ -1,4 +1,4 @@
-FROM $BUILD_IMAGE
+FROM {{ARG_FROM}}
 
 WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/
 ENV CGO_ENABLED=0
