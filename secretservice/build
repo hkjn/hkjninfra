@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-declare BUILD_IMAGE="hkjn/workspace:$(uname -m )-1.3.3"
+declare BUILD_IMAGE="hkjn/workspace:$(uname -m )-1.3.6"
 declare BUILD_DIR="$(mktemp -d secretservice_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
