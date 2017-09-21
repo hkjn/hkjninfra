@@ -10,6 +10,7 @@ declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/$
 declare DECENTER_VERSION="1.1.5"
 declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}"
 declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
+declare TARGET_ARCH=${TARGET_ARCH:-"$(uname -m)"}
 
 fetch() {
 	local url
@@ -51,15 +52,15 @@ rm -rf ${BASE}/${VERSION}.sha512
 mkdir -p ${WORK_DIR}
 cd ${WORK_DIR}
 
-fetch ${INFRA_RELEASE_URL}/tclient_x86_64
-fetch ${INFRA_RELEASE_URL}/tserver_x86_64
+fetch ${INFRA_RELEASE_URL}/tclient_${TARGET_ARCH}
+fetch ${INFRA_RELEASE_URL}/tserver_${TARGET_ARCH}
 fetch ${INFRA_RELEASE_URL}/gather_facts
-install_bin tclient_$(uname -m) tclient
+install_bin tclient_${TARGET_ARCH} tclient
 install_bin gather_facts
 fetch ${INFRA_RELEASE_URL}/secretservice
 install_bin secretservice
 
-fetch ${DECENTER_RELEASE_URL}/decenter_world_x86_64
-fetch ${DECENTER_RELEASE_URL}/decenter_redirector_x86_64
+fetch ${DECENTER_RELEASE_URL}/decenter_world_${TARGET_ARCH}
+fetch ${DECENTER_RELEASE_URL}/decenter_redirector_${TARGET_ARCH}
 info "Checksums for v${VERSION}:"
 cat ${BASE}/${VERSION}.sha512
