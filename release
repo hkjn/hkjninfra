@@ -81,6 +81,7 @@ EOT
 
 upload() {
   [[ $# -ne 2 ]] && fatal "usage: upload file url"
+  [[ -e ${1} ]] || fatal "No such file to upload: ${1}"
   info "Uploading $1 to $2.."
   local response
   response=$(curl \
