@@ -103,8 +103,8 @@ create_release
 cd telemetry/
 upload tclient_x86_64 ${URL}
 upload tserver_x86_64 ${URL}
-upload tclient_arm7l ${URL}
-upload tserver_arm7l ${URL}
+upload tclient_armv7l ${URL}
+upload tserver_armv7l ${URL}
 upload gather_facts ${URL}
 
 cd -
