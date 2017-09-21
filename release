@@ -71,6 +71,7 @@ EOT
 
   debugV "Response is: ${response}"
   local url
+  # TODO: Could dockerize release tools, since curl / jq might not be installed..
   url=$(echo "${response}" | jq -r ".upload_url")
   [[ "${url}" ]] && [[ "${url}" != "null" ]] || fatal "Couldn't get upload_url from Github response: ${response}"
   debugV "URL is '${url}'"
