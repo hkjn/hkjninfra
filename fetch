@@ -10,8 +10,9 @@ declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/$
 declare DECENTER_VERSION="1.1.6"
 declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}"
 declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
-declare TARGET_ARCH=${TARGET_ARCH:-"$(uname -m)"}
+declare TARGET_ARCH=${TARGET_ARCH:-"x86_64"}
 declare DECENTER_ARCH=${DECENTER_ARCH:-"x86_64"}
+declare INSTALL_BINS=${INSTALL_BINS:-""}
 
 fetch() {
 	local url
@@ -34,6 +35,9 @@ fetch() {
 }
 
 install_bin() {
+	if [[ ! "${INSTALL_BINS}" ]]; then
+		return 0
+	fi
 	local binary
 	binary="${1}"
 	local target
