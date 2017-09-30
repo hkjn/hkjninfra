@@ -6,8 +6,8 @@ import json
 
 
 INSTANCES = {
-    'core': '1.1.4',
-    'decenter_world': '1.2.4',
+    'core': '1.3.3',
+    'decenter_world': '1.3.3',
     #'builder': '1.2.5',
 }
 
