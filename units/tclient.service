@@ -1,5 +1,5 @@
 [Unit]
-Description=report client
+Description=tclient
 After=network-online.target
 
 [Service]
@@ -7,7 +7,7 @@ Environment=PATH=/usr/bin/:/opt/bin:/bin
 Environment=REPORT_ADDR=mon.hkjn.me:50051
 Environment=REPORT_FACTS_PATH=/etc/report_facts.json
 ExecStartPre=-/bin/bash -c "gather_facts > /etc/report_facts.json"
-ExecStart=/bin/bash -c report_client
+ExecStart=/bin/bash -c tclient
 
 [Install]
 WantedBy=multi-user.target

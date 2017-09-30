@@ -111,11 +111,11 @@ def get_config(instance, version, checksums):
     shared_files = [
         UPDATE_CONF_FILE,
         new_file('gather_facts', checksums['gather_facts'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version)),
-        new_file('report_client', checksums['tclient_x86_64'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version)),
+        new_file('tclient', checksums['tclient_x86_64'], 'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version)),
     ]
     shared_units = [
-        new_unit('report_client.service'),
-        new_unit('report_client.timer'),
+        new_unit('tclient.service'),
+        new_unit('tclient.timer'),
     ]
     files = []
     units = []

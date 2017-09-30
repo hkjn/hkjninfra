@@ -7,10 +7,11 @@ declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare DECENTER_VERSION="1.1.5"
+declare DECENTER_VERSION="1.1.6"
 declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}"
 declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
 declare TARGET_ARCH=${TARGET_ARCH:-"$(uname -m)"}
+declare DECENTER_ARCH=${DECENTER_ARCH:-"x86_64"}
 
 fetch() {
 	local url
@@ -60,7 +61,7 @@ install_bin gather_facts
 fetch ${INFRA_RELEASE_URL}/secretservice
 install_bin secretservice
 
-fetch ${DECENTER_RELEASE_URL}/decenter_world_${TARGET_ARCH}
-fetch ${DECENTER_RELEASE_URL}/decenter_redirector_${TARGET_ARCH}
+fetch ${DECENTER_RELEASE_URL}/decenter_world_${DECENTER_ARCH}
+fetch ${DECENTER_RELEASE_URL}/decenter_redirector_${DECENTER_ARCH}
 info "Checksums for v${VERSION}:"
 cat ${BASE}/${VERSION}.sha512
