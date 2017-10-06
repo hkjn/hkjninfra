@@ -120,33 +120,37 @@ def get_config(instance, version, checksums):
     files = []
     units = []
     filesystem = []
-    if instance == 'core':
-        files = []
-        units = [
-            new_unit_dropin('docker.service', '10_override_storage.conf'),
-            new_unit('bitcoin.service'),
-            new_unit('containers.mount'),
-        ]
-    elif instance == 'decenter_world':
-        decenter_version = '1.1.5'
-        files = [
-            new_file(
-                'decenter_world',
-                checksums['decenter_world_x86_64'],
-                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_world_x86_64'.format(decenter_version),
-            ),
-            new_file(
-                'decenter_redirector',
-                checksums['decenter_redirector_x86_64'],
-                'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_redirector_x86_64'.format(decenter_version),
-            ),
-        ]
-        units = [
-            new_unit('decenter.service'),
-            new_unit('decenter_redirector.service'),
-            new_unit('etc-secrets.mount'),
-        ]
-    else:
+    decenter_version = '1.1.5' # TODO: Should come from fetch + checksums file.
+    instance_configs = {
+        'core': {
+            'files': [],
+            'units': [
+                new_unit_dropin('docker.service', '10_override_storage.conf'),
+                new_unit('bitcoin.service'),
+                new_unit('containers.mount'),
+            ],
+        },
+        'decenter_world': {
+            'files': [
+                new_file(
+                    'decenter_world',
+                    checksums['decenter_world_x86_64'],
+                    'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_world_x86_64'.format(decenter_version),
+                ),
+                new_file(
+                    'decenter_redirector',
+                    checksums['decenter_redirector_x86_64'],
+                    'https://github.com/hkjn/decenter.world/releases/download/{}/decenter_redirector_x86_64'.format(decenter_version),
+                ),
+            ],
+            'units': [
+                new_unit('decenter.service'),
+                new_unit('decenter_redirector.service'),
+                new_unit('etc-secrets.mount'),
+            ],
+        },
+    }
+    if instance not in instance_configs:
         raise RuntimeError('Unknown instance {}'.format(instance))
 
     return {
@@ -156,10 +160,10 @@ def get_config(instance, version, checksums):
         },
         'storage': {
             'filesystem': filesystem,
-            'files': shared_files + files,
+            'files': shared_files + instance_configs[instance]['files'],
         },
         'systemd': {
-            'units': shared_units + units,
+            'units': shared_units + instance_configs[instance]['units'],
             'networkd': {},
             'passwd': {},
         },
