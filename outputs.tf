@@ -64,6 +64,10 @@ output "hkjn_ignite_json_core" {
   value = "${google_compute_instance.core.metadata.user-data}"
 }
 
+output "hkjn_ignite_json_decenter_world" {
+  value = "${google_compute_instance.decenter-world.metadata.user-data}"
+}
+
 output "hkjn_ip_decenter_world3" {
   value = "${google_compute_instance.decenter-world.network_interface.0.access_config.0.assigned_nat_ip}"
 }
