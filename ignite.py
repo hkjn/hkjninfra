@@ -142,19 +142,9 @@ def get_config(instance, version, checksums):
             ),
         ]
         units = [
-            {
-               "name": "decenter.service",
-                "enable": True,
-                "contents": "[Unit]\nDescription=decenter.world server\nAfter=network-online.target\n\n[Service]\nEnvironment=PATH=/usr/bin/:/opt/bin:/bin\nEnvironment=DECENTER_WORLD_ADDR=:443\nExecStart=/usr/bin/bash -c \"decenter_world\"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n",
-            }, {
-                "name": "decenter_redirector.service",
-                "enable": True,
-                "contents": "[Unit]\n Description=decenter.world redirector server\n After=network-online.target\n\n [Service]\n Environment=PATH=/usr/bin/:/opt/bin:/bin\n ExecStart=/usr/bin/bash -c \"decenter_redirector\"\n Restart=always\n\n [Install]\n WantedBy=multi-user.target\n"
-            }, {
-                "name": "etc-secrets.mount",
-                "enable": True,
-                "contents": "[Mount]\nWhat=/dev/disk/by-id/scsi-0Google_PersistentDisk_persistent-disk-1\nWhere=/etc/secrets\nType=ext4\n\n[Install]\nRequiredBy=local-fs.target\n"
-            },
+            new_unit('decenter.service'),
+            new_unit('decenter_redirector.service'),
+            new_unit('etc-secrets.mount'),
         ]
     else:
         raise RuntimeError('Unknown instance {}'.format(instance))
