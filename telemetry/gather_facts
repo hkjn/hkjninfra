@@ -3,6 +3,7 @@
 #
 declare GCP_METADATA_URL="http://metadata.google.internal/computeMetadata/v1/instance"
 declare DISKS="${DISKS:-"{}"}"
+declare ID="${ID:-$(hostname)}"
 declare PLATFORM="${PLATFORM:-"unknown"}"
 declare NAME="${NAME:-"unknown"}"
 declare MACHINE_TYPE="${MACHINE_TYPE:-""}"
