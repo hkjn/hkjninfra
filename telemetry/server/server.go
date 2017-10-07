@@ -56,7 +56,6 @@ func newRpcServer() *grpc.Server {
 	rpcServer := grpc.NewServer()
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
-	log.Printf("Registering GreeterServer to tcp listener on %q..\n", defaultPort)
 	reflection.Register(rpcServer)
 	return rpcServer
 }
