@@ -15,7 +15,7 @@ RUN mkdir -p /home/go/bin/report && \
     cp report/*.pb.go /home/go/bin/report/
 
 WORKDIR /home/go/bin
-RUN sh -c "GOOS=linux GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client"
+RUN GOARCH=amd64 go build -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client
 RUN GOARCH=amd64 go build -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
 RUN GOARCH=arm go build -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
 RUN GOARCH=arm go build -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server
