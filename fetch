@@ -61,6 +61,7 @@ fetch ${INFRA_RELEASE_URL}/tclient_${TARGET_ARCH}
 fetch ${INFRA_RELEASE_URL}/tserver_${TARGET_ARCH}
 fetch ${INFRA_RELEASE_URL}/gather_facts
 install_bin tclient_${TARGET_ARCH} tclient
+install_bin tserver_${TARGET_ARCH} tserver
 install_bin gather_facts
 fetch ${INFRA_RELEASE_URL}/secretservice
 install_bin secretservice
