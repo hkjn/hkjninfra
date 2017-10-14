@@ -15,6 +15,7 @@ import (
 	googletime "github.com/golang/protobuf/ptypes/timestamp"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
 	pb "hkjn.me/hkjninfra/telemetry/report"
@@ -23,14 +24,16 @@ import (
 const defaultAddr = ":50051"
 
 var (
-	debugging  = os.Getenv("REPORT_DEBUGGING") == "true"
-	slackToken = os.Getenv("REPORT_SLACK_TOKEN")
+	debugging   = os.Getenv("REPORT_DEBUGGING") == "true"
+	slackToken  = os.Getenv("REPORT_SLACK_TOKEN")
+	tlsCertFile = os.Getenv("REPORT_TLS_CERT")
+	tlsKeyFile  = os.Getenv("REPORT_TLS_KEY")
 )
+
 
 type (
 	// clientInfo represents info about a client that has
 	// reported to us.
-	//
 	clientInfo struct {
 		// lastSeen is the last time we heard from the client.
 		lastSeen time.Time
@@ -59,12 +62,16 @@ func debug(format string, a ...interface{}) {
 }
 
 // newRpcServer returns the GRPC server.
-func newRpcServer() *grpc.Server {
-	rpcServer := grpc.NewServer()
+func newRpcServer() (*grpc.Server, error) {
+	c, err := credentials.NewServerTLSFromFile(tlsCertFile, tlsKeyFile)
+	if err != nil {
+		return nil, err
+	}
+	rpcServer := grpc.NewServer(grpc.Creds(c))
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
 	reflection.Register(rpcServer)
-	return rpcServer
+	return rpcServer, nil
 }
 
 // sendSlack sends msg to Slack.
@@ -172,24 +179,14 @@ func main() {
 	if slackToken == "" {
 		log.Println("No REPORT_SLACK_TOKEN specified, can't report to Slack.")
 	}
-	//http.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
-	//conn, err := grpc.Dial(addr, grpc.WithInsecure())
-	//if err != nil {
-	//	log.Fatalf("did not connect: %v", err)
-	//}
-	//return pb.NewReportClient(conn), conn.Close
-	//	fmt.Fprintf(w, "Hello, world")
-	//})
 
-	//go func() {
-	//	log.Printf("Starting http server in separate goroutine..\n")
-	//	log.Fatal(http.ListenAndServe(port, nil))
-	//}()
-	// TODO: creds, err := credentials.NewServerTLSFromFile(certFile, keyFile string)
-	rpcServer := newRpcServer()
+	rpcServer, err := newRpcServer()
+	if err != nil {
+		log.Fatalf("failed to create rpc server: %v\n", err)
+	}
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		log.Fatalf("failed to listen: %v\n", err)
 	}
 
 	sendSlack(fmt.Sprintf("%s `report_server` starting..", Version))
