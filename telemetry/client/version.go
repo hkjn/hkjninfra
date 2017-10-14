@@ -1,4 +1,4 @@
-// This file gets overwritten with the actual version at build time.
+// The Version value is set with 'go build -ldflags "-X main.Version=$VERSION" at build time.
 package main
 
-const Version="dev"
+var Version string
