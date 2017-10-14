@@ -63,9 +63,15 @@ func debug(format string, a ...interface{}) {
 
 // newRpcServer returns the GRPC server.
 func newRpcServer() (*grpc.Server, error) {
+	if tlsCertFile == "" {
+		return nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CERT")
+	}
+	if tlsKeyFile == "" {
+		return nil, fmt.Errorf("no TLS key file set with REPORT_TLS_KEY")
+	}
 	c, err := credentials.NewServerTLSFromFile(tlsCertFile, tlsKeyFile)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to create server TLS from cert %q, key %q", tlsCertFile, tlsKeyFile, err)
 	}
 	rpcServer := grpc.NewServer(grpc.Creds(c))
 	s := &reportServer{map[string]clientInfo{}}
