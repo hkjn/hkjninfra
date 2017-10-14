@@ -20,7 +20,7 @@ import (
 	pb "hkjn.me/hkjninfra/telemetry/report"
 )
 
-const defaultPort = ":50051"
+const defaultAddr = ":50051"
 
 var (
 	debugging  = os.Getenv("REPORT_DEBUGGING") == "true"
@@ -43,6 +43,13 @@ type (
 		clients map[string]clientInfo
 	}
 )
+
+func getAddr(defaultAddr string) string {
+	if os.Getenv("REPORT_ADDR") != "" {
+		return os.Getenv("REPORT_ADDR")
+	}
+	return defaultAddr
+}
 
 func debug(format string, a ...interface{}) {
 	if !debugging {
@@ -160,15 +167,31 @@ func (s *reportServer) Send(ctx context.Context, req *pb.ReportRequest) (*pb.Rep
 }
 
 func main() {
-	log.Printf("The report_server %s starting..\n", Version)
+	addr := getAddr(defaultAddr)
+	log.Printf("report_server %s starting, binding at %s..\n", Version, addr)
 	if slackToken == "" {
 		log.Println("No REPORT_SLACK_TOKEN specified, can't report to Slack.")
 	}
+	//http.HandleFunc("/info", func(w http.ResponseWriter, r *http.Request) {
+	//conn, err := grpc.Dial(addr, grpc.WithInsecure())
+	//if err != nil {
+	//	log.Fatalf("did not connect: %v", err)
+	//}
+	//return pb.NewReportClient(conn), conn.Close
+	//	fmt.Fprintf(w, "Hello, world")
+	//})
+
+	//go func() {
+	//	log.Printf("Starting http server in separate goroutine..\n")
+	//	log.Fatal(http.ListenAndServe(port, nil))
+	//}()
+	// TODO: creds, err := credentials.NewServerTLSFromFile(certFile, keyFile string)
 	rpcServer := newRpcServer()
-	lis, err := net.Listen("tcp", defaultPort)
+	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
+
 	sendSlack(fmt.Sprintf("%s `report_server` starting..", Version))
 	if err := rpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
