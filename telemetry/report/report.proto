@@ -6,6 +6,7 @@ syntax = "proto3";
 
 package report;
 
+import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
 // Set some options necessary to generate .java classes from the .proto.
@@ -61,7 +62,12 @@ message InfoResponse {
 // The Report service definition.
 service Report {
 	// Send report to server.
-	rpc Send(ReportRequest) returns (ReportResponse) {}
+	rpc Send(ReportRequest) returns (ReportResponse) {
+          option (google.api.http) = {
+            post: "/v1/telemetry/report"
+            body: "*"
+          };
+        }
 	// Query for info on known clients.
 	rpc Info(InfoRequest) returns (InfoResponse) {}
 }
