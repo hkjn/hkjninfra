@@ -13,60 +13,25 @@ declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
 declare TARGET_ARCH=${TARGET_ARCH:-"x86_64"}
 declare DECENTER_ARCH=${DECENTER_ARCH:-"x86_64"}
 declare INSTALL_BINS=${INSTALL_BINS:-""}
+source "logging.sh"
 
 fetch() {
 	local url
 	url="${1}"
-	debug "Working to fetch binaries in '${WORK_DIR}': $(pwd)"
-	local binary
-	binary=$(basename ${url})
-	if [[ ! -e "${binary}" ]]; then
-		info "Fetching '${url}' ${VERSION}.."
-		debug "Sending request: curl --progress-bar -fSLO ${url}"
-		local checksum
-		curl --progress-bar -fSLO ${url}
-		checksum=$(sha512sum ${binary})
-		debug "Checksum for '${url}' was ${checksum}"
-		echo "${checksum}" >> ${BASE}/${VERSION}.sha512
-	else
-		info "File '${binary}' already existed. Getting checksum.."
-		sha512sum ${binary} >> ${BASE}/${VERSION}.sha512 
-	fi
+	debug "Working to fetch checksums in '${WORK_DIR}': $(pwd)"
+	info "Fetching '${url}' ${VERSION}.."
+	debug "Sending request: curl --progress-bar -fSLO ${url}"
+	curl --progress-bar -fSLO ${url}
 }
 
-install_bin() {
-	if [[ ! "${INSTALL_BINS}" ]]; then
-		return 0
-	fi
-	local binary
-	binary="${1}"
-	local target
-	if [[ $# -eq 1 ]]; then
-		target="${1}"
-	else
-		target="${2}"
-	fi
-	cd ${WORK_DIR}
-	sudo mkdir -p /opt/bin/
-	sudo install ${binary} /opt/bin/${target}
-	info "Installed ${binary} v${VERSION} to /opt/bin/${target}."
-}
-
-source "logging.sh"
 rm -rf ${BASE}/${VERSION}.sha512
 mkdir -p ${WORK_DIR}
 cd ${WORK_DIR}
 
-fetch ${INFRA_RELEASE_URL}/tclient_${TARGET_ARCH}
-fetch ${INFRA_RELEASE_URL}/tserver_${TARGET_ARCH}
-fetch ${INFRA_RELEASE_URL}/gather_facts
-install_bin tclient_${TARGET_ARCH} tclient
-install_bin tserver_${TARGET_ARCH} tserver
-install_bin gather_facts
-fetch ${INFRA_RELEASE_URL}/secretservice
-install_bin secretservice
+fetch ${INFRA_RELEASE_URL}/SHA512SUMS
+cat SHA512SUMS > ${BASE}/${VERSION}.sha512
+fetch ${DECENTER_RELEASE_URL}/SHA512SUMS
+cat SHA512SUMS >> ${BASE}/${VERSION}.sha512
 
-fetch ${DECENTER_RELEASE_URL}/decenter_world_${DECENTER_ARCH}
-fetch ${DECENTER_RELEASE_URL}/decenter_redirector_${DECENTER_ARCH}
 info "Checksums for v${VERSION}:"
 cat ${BASE}/${VERSION}.sha512

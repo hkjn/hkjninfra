@@ -1,8 +1,6 @@
-#!/usr/bin/env bash
 #
 # Build telemetry binaries in Docker container.
 #
-
 set -euo pipefail
 
 declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-1.4.0"
@@ -24,7 +22,7 @@ echo "Removing bin.."
 rm -rf bin/
 docker cp tbuild:/home/go/bin/ $(pwd)
 docker rm tbuild
-mv -v bin/tclient* bin/tserver* .
+mv -v bin/tclient* bin/tserver* bin/SHA512SUMS .
 if ldd tclient*; then
 	echo "FATAL: tclient binaries should be statically linked" >&2
 	exit 1

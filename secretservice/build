@@ -20,6 +20,6 @@ echo "Copying out binaries from container.."
 rm -rf bin/
 docker cp ssbuild:/home/go/bin $(pwd)
 docker rm ssbuild
-mv -v bin/secretservice* .
+mv -v bin/secretservice* bin/SHA512SUMS .
 rm -rf bin/
 docker rmi secretservice-build

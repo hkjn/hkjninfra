@@ -1,14 +1,18 @@
 FROM {{ARG_FROM}}
 
-WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/
 ENV CGO_ENABLED=0
+WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/
+
 COPY ["*.go", "./"]
 COPY ["vendor", "./vendor/"]
 
 USER go
+
 RUN go test && \
     go install
 
 WORKDIR /home/go/bin/
+
+RUN sha512sum secretservice* > SHA512SUMS
 
 CMD echo "Binaries available in $(pwd): $(ls)"
