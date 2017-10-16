@@ -106,7 +106,9 @@ upload tserver_x86_64 ${URL}
 upload tclient_armv7l ${URL}
 upload tserver_armv7l ${URL}
 upload gather_facts ${URL}
+upload SHA512SUMS ${URL}
 
 cd ../secretservice
 upload secretservice ${URL}
+upload SHA512SUMS ${URL}
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}"
