@@ -63,9 +63,12 @@ func getInfo(d string) (*pb.ClientInfo, error) {
 
 // getClient returns the report client and a func to close the client's connection.
 func getClient(addr string) (pb.ReportClient, func() error, error) {
+	if tlsCertFile == "" {
+		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CERT")
+	}
 	creds, err := credentials.NewClientTLSFromFile(tlsCertFile, "")
 	if err != nil {
-		return nil, nil, fmt.Errorf("could not create credentials: %v", err)
+		return nil, nil, fmt.Errorf("could not create TLS credentials from cert file %q: %v", tlsCertFile, err)
 	}
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
