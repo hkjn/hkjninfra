@@ -7,7 +7,7 @@ declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "${BASE}"
 declare VERSION="$(cat VERSION)"
 declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
-declare DECENTER_VERSION="1.1.6"
+declare DECENTER_VERSION="1.1.7"
 declare DECENTER_RELEASE_URL="https://github.com/hkjn/decenter.world/releases/download/${DECENTER_VERSION}"
 declare WORK_DIR="/tmp/hkjninfra_${VERSION}"
 declare TARGET_ARCH=${TARGET_ARCH:-"x86_64"}

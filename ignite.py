@@ -120,7 +120,7 @@ def get_config(instance, version, checksums):
     files = []
     units = []
     filesystem = []
-    decenter_version = '1.1.5' # TODO: Should come from fetch + checksums file.
+    decenter_version = '1.1.7' # TODO: Should come from fetch + checksums file.
     instance_configs = {
         'core': {
             'files': [],
