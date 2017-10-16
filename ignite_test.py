@@ -93,7 +93,7 @@ class IgniteTest(unittest.TestCase):
                             ],
                             'name': 'docker.service',
                         }, {
-                            'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c "docker pull hkjn/bitcoin:$(uname -m)"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c " \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m) -dbcache=500 -printtoconsole"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
+                            'contents': '[Unit]\nDescription=bitcoind\nAfter=network-online.target\n\n[Service]\nExecStartPre=-/bin/bash -c "docker pull hkjn/bitcoin:$(uname -m)"\nExecStartPre=-/usr/bin/docker stop bitcoin\nExecStartPre=-/usr/bin/docker rm bitcoin\nExecStart=/bin/bash -c " \\\n  docker run --name bitcoin \\\n             -p 8333:8333 \\\n             --memory=1050m \\\n             --cpu-shares=128 \\\n             -v /containers/bitcoin:/home/bitcoin/.bitcoin \\\n             hkjn/bitcoin:$(uname -m) -dbcache=800 -onlynet=ipv4 -printtoconsole"\nRestart=always\n\n[Install]\nWantedBy=multi-user.target\n',
                             'enable': True,
                             'name': 'bitcoin.service',
                         }, {
