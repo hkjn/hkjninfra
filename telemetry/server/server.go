@@ -71,7 +71,7 @@ func newRpcServer() (*grpc.Server, error) {
 	}
 	c, err := credentials.NewServerTLSFromFile(tlsCertFile, tlsKeyFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create server TLS from cert %q, key %q", tlsCertFile, tlsKeyFile, err)
+		return nil, fmt.Errorf("unable to create server TLS from cert %q, key %q: %v", tlsCertFile, tlsKeyFile, err)
 	}
 	rpcServer := grpc.NewServer(grpc.Creds(c))
 	s := &reportServer{map[string]clientInfo{}}
