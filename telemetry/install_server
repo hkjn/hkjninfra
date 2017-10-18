@@ -9,7 +9,7 @@ declare VERSION="$(cat ../VERSION)"
 declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
 declare WORK_DIR="/tmp/telemetry_${VERSION}"
 declare CPU_ARCH=$(uname -m)
-source "logging.sh"
+source "../logging.sh"
 
 mkdir -p ${WORK_DIR}
 cd ${WORK_DIR}
