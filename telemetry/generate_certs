@@ -3,7 +3,7 @@
 #
 set -euo pipefail
 
-declare ADDRESS=mon.hkjn.me
+declare ADDRESS=mon.hkjn.me:50051
 declare SERVER_NAME=server
 declare CLIENT_NAME=client
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"

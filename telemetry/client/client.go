@@ -73,10 +73,10 @@ func getClient(addr string) (pb.ReportClient, func() error, error) {
 		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CERT")
 	}
 	if tlsKeyFile == "" {
-		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_KEY")
+		return nil, nil, fmt.Errorf("no TLS key file set with REPORT_TLS_KEY")
 	}
 	if tlsCaCertFile == "" {
-		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CA_CERT")
+		return nil, nil, fmt.Errorf("no TLS CA cert file set with REPORT_TLS_CA_CERT")
 	}
 
 	// Mutual TLS.
