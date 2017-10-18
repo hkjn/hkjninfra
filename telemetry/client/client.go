@@ -2,8 +2,11 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -24,7 +27,10 @@ const (
 
 var (
 	debugging   = os.Getenv("REPORT_DEBUGGING") == "true"
+	addr        = getAddr(defaultAddr)
 	tlsCertFile = os.Getenv("REPORT_TLS_CERT")
+	tlsKeyFile  = os.Getenv("REPORT_TLS_KEY")
+	tlsCaCertFile   = os.Getenv("REPORT_TLS_CA_CERT")
 )
 
 func debug(format string, a ...interface{}) {
@@ -66,10 +72,36 @@ func getClient(addr string) (pb.ReportClient, func() error, error) {
 	if tlsCertFile == "" {
 		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CERT")
 	}
-	creds, err := credentials.NewClientTLSFromFile(tlsCertFile, "")
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not create TLS credentials from cert file %q: %v", tlsCertFile, err)
+	if tlsKeyFile == "" {
+		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_KEY")
 	}
+	if tlsCaCertFile == "" {
+		return nil, nil, fmt.Errorf("no TLS cert file set with REPORT_TLS_CA_CERT")
+	}
+
+	// Mutual TLS.
+	cert, err := tls.LoadX509KeyPair(
+		tlsCertFile,
+		tlsKeyFile,
+	)
+
+	cp := x509.NewCertPool()
+	bs, err := ioutil.ReadFile(tlsCaCertFile)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read ca cert: %s", err)
+	}
+
+	ok := cp.AppendCertsFromPEM(bs)
+	if !ok {
+		return nil, nil, fmt.Errorf("failed to append certs")
+	}
+
+	creds := credentials.NewTLS(&tls.Config{
+		ServerName:   addr,
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      cp,
+	})
+
 	conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		return nil, nil, fmt.Errorf("did not connect: %v", err)
@@ -104,7 +136,6 @@ func send(c pb.ReportClient) error {
 
 func main() {
 	log.Printf("report_client %s starting..\n", Version)
-	addr := getAddr(defaultAddr)
 
 	log.Printf("Contacting server at tcp addr %q..\n", addr)
 	c, close, err := getClient(addr)

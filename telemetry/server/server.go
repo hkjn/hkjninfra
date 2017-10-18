@@ -3,8 +3,11 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -28,6 +31,7 @@ var (
 	slackToken  = os.Getenv("REPORT_SLACK_TOKEN")
 	tlsCertFile = os.Getenv("REPORT_TLS_CERT")
 	tlsKeyFile  = os.Getenv("REPORT_TLS_KEY")
+	tlsCaCertFile   = os.Getenv("REPORT_TLS_CA_CERT")
 )
 
 
@@ -69,11 +73,31 @@ func newRpcServer() (*grpc.Server, error) {
 	if tlsKeyFile == "" {
 		return nil, fmt.Errorf("no TLS key file set with REPORT_TLS_KEY")
 	}
-	c, err := credentials.NewServerTLSFromFile(tlsCertFile, tlsKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("unable to create server TLS from cert %q, key %q: %v", tlsCertFile, tlsKeyFile, err)
+	if tlsCaCertFile == "" {
+		return nil, fmt.Errorf("no TLS CA cert file set with REPORT_TLS_CA_CERT")
 	}
-	rpcServer := grpc.NewServer(grpc.Creds(c))
+	cert, err := tls.LoadX509KeyPair(tlsCertFile, tlsKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load x.509 key pair: %v", err)
+	}
+	cp := x509.NewCertPool()
+	bs, err := ioutil.ReadFile(tlsCaCertFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read client ca cert: %s", err)
+	}
+	ok := cp.AppendCertsFromPEM(bs)
+	if !ok {
+		return nil, fmt.Errorf("failed to append client certs")
+	}
+
+	conf := &tls.Config{
+		ClientAuth:   tls.RequireAndVerifyClientCert,
+		Certificates: []tls.Certificate{cert},
+		ClientCAs:    cp,
+	}
+
+	opts := grpc.Creds(credentials.NewTLS(conf))
+	rpcServer := grpc.NewServer(opts)
 	s := &reportServer{map[string]clientInfo{}}
 	pb.RegisterReportServer(rpcServer, s)
 	reflection.Register(rpcServer)
