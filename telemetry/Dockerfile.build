@@ -22,11 +22,18 @@ RUN mkdir -p /home/go/bin/report && \
 
 WORKDIR /home/go/bin
 COPY ["gather_facts", "."]
-RUN GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION}" -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client && \
-    GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION}" -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server && \
-    GOARCH=arm go build -ldflags "-X main.Version=${VERSION}" -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client && \
-    GOARCH=arm go build -ldflags "-X main.Version=${VERSION}"  -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server && \
-    sha512sum tclient_* tserver_* gather_facts > SHA512SUMS
+
+RUN go test hkjn.me/hkjninfra/telemetry/... && \
+    go vet hkjn.me/hkjninfra/telemetry/...
+
+RUN GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION}" -o tclient_x86_64 hkjn.me/hkjninfra/telemetry/client
+RUN GOARCH=amd64 go build -ldflags "-X main.Version=${VERSION}" -o tserver_x86_64 hkjn.me/hkjninfra/telemetry/server
+
+RUN GOARCH=arm go build -ldflags "-X main.Version=${VERSION}" -o tclient_armv7l hkjn.me/hkjninfra/telemetry/client
+RUN GOARCH=arm go build -ldflags "-X main.Version=${VERSION}"  -o tserver_armv7l hkjn.me/hkjninfra/telemetry/server
+
+RUN sha512sum tclient_* tserver_* gather_facts > SHA512SUMS
+
 ENTRYPOINT ["sh"]
 
 
