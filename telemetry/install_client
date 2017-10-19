@@ -1,0 +1,21 @@
+#
+# Download and install latest version of client binary.
+#
+set -euo pipefail
+
+declare BASE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "${BASE}"
+declare VERSION="$(cat ../VERSION)"
+declare INFRA_RELEASE_URL="https://github.com/hkjn/hkjninfra/releases/download/${VERSION}"
+declare WORK_DIR="/tmp/telemetry_${VERSION}"
+declare CPU_ARCH=$(uname -m)
+source "../logging.sh"
+
+mkdir -p ${WORK_DIR}
+cd ${WORK_DIR}
+
+info "Fetching version ${VERSION}.."
+curl --progress-bar -fSLO ${INFRA_RELEASE_URL}/tclient_${CPU_ARCH}
+info "Installing binary to /usr/local/bin/tclient.."
+sudo install tclient_${CPU_ARCH} /usr/local/bin/tclient
+

@@ -1,4 +1,4 @@
-ignite_diff() {
+show_ignite_diff() {
 	local target
 	target=${1}
 	if [[ ! -e bootstrap/bootstrap_${target}.json ]]; then
@@ -33,4 +33,5 @@ run_tf() {
 		   hkjn/terraform $@
 }
 
+alias ignite_diff='show_ignite_diff $@'
 alias tf='run_tf $@'
