@@ -81,7 +81,7 @@ func main() {
 	if err := envconfig.Process("SECRETSERVICE", &c); err != nil {
 		log.Fatalf("envconfig: %v\n", err)
 	}
-	log.Printf("Using seed %q\n", c.Seed)
+	log.Printf("Using %d character seed\n", len(c.Seed))
 	if c.Seed == "" {
 		log.Fatalf("no SECRETSERVICE_SEED\n")
 	}

@@ -14,7 +14,7 @@ class IgniteTest(unittest.TestCase):
             'gather_facts': '55bb96874add4d200274cf1796c622da8e92244ad5b5fa15818bc516c5ed249e9cd98a736d44b66c7e03ca2b52e5aa898717fbd7d08ff13cd94de38ba2aef8c8',
             'tclient_x86_64': 'bf080645783c999f1a2bc8bc306660df8dbf496c6b7f98cf1d257d43c544050a7f4b6d1d9ba962c1d45fae8eb373061d3350e191edd73f1b44f01fc01448177f',
         }
-        got = ignite.get_config('core', '1.1.0', checksums)
+        got = ignite.get_config('core', '1.1.0', checksums, 'fakehash')
         want = {
                 'ignition': {'config': {}, 'version': '2.0.0'},
                 'storage': {
@@ -40,8 +40,20 @@ class IgniteTest(unittest.TestCase):
                         'mode': 493,
                         'path': '/opt/bin/gather_facts',
                         'user': {},
-                    },
-                    {
+                    }, {
+                        'contents': {
+                            'source': 'https://admin1.hkjn.me/fakehash/files/certs/mon_ca.pem',
+                            'verification': {
+                                'hash':
+                                'sha512-cf8032384a17fc591f83030a3a536f8b80e79c7d6e5e839e5003b587163bf371a51ab1b14dc047486cfd55fb74238d69253fcb27d49245ba249359584b169bb4',
+                                }
+                            },
+                        'filesystem': 'root',
+                        'group': {},
+                        'mode': 493,
+                        'path': '/etc/ssl/mon_ca.pem',
+                        'user': {},
+                    }, {
                         'contents': {
                             'source': 'https://github.com/hkjn/hkjninfra/releases/download/1.1.0/tclient_x86_64',
                             'verification': {
@@ -71,8 +83,8 @@ class IgniteTest(unittest.TestCase):
                                 'Environment=REPORT_ADDR=mon.hkjn.me:50051',
                                 'Environment=REPORT_FACTS_PATH=/etc/report_facts.json',
                                 'Environment=REPORT_TLS_CA_CERT=/etc/ssl/mon_ca.pem',
-                                'Environment=REPORT_TLS_CERT=/etc/ssl/%H.pem',
-                                'Environment=REPORT_TLS_KEY=/etc/ssl/%H-key.pem',
+                                'Environment=REPORT_TLS_CERT=/etc/ssl/client.pem',
+                                'Environment=REPORT_TLS_KEY=/etc/ssl/client-key.pem',
                                 '',
                                 'ExecStartPre=-/bin/bash -c "/opt/bin/gather_facts > /etc/report_facts.json"',
                                 'ExecStart=/opt/bin/tclient',
