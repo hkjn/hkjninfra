@@ -101,12 +101,14 @@ def get_checksums(version):
     return result
 
     
-def get_config(instance, version, checksums, sshash):
+def get_config(instance, hkjninfra_version, decenter_version, checksums, sshash):
     """Returns Ignition config for the instance.
     
     Args:
         instance: str with the instance to create config for.
-        version: version of hkjninfra binaries to run on the instance.
+        hkjninfra_version: version of hkjninfra binaries to run on the instance.
+        decenter_version: version of decenter.world binaries to run on the
+        instance.
         checksums: dict of binary name to checksums for binaries.
         sshash: str with the secretservice hash to use.
     Returns:
@@ -118,7 +120,7 @@ def get_config(instance, version, checksums, sshash):
         new_file(
             '/opt/bin/gather_facts',
             checksums['gather_facts'],
-            'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(version),
+            'https://github.com/hkjn/hkjninfra/releases/download/{}/gather_facts'.format(hkjninfra_version),
         ),
         new_file(
             '/etc/ssl/mon_ca.pem',
@@ -128,7 +130,7 @@ def get_config(instance, version, checksums, sshash):
         new_file(
             '/opt/bin/tclient',
             checksums['tclient_x86_64'],
-            'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(version),
+            'https://github.com/hkjn/hkjninfra/releases/download/{}/tclient_x86_64'.format(hkjninfra_version),
         ),
     ]
     shared_units = [
@@ -138,7 +140,6 @@ def get_config(instance, version, checksums, sshash):
     files = []
     units = []
     filesystem = []
-    decenter_version = '1.1.7' # TODO: Should come from fetch + checksums file.
     instance_configs = {
         'core': {
             'files': [
@@ -203,25 +204,26 @@ def run():
     """Generate Ignition JSON config files for all instances.
     """
 
+    decenter_version = '1.1.7' # TODO: Should come from fetch + checksums file.
     sshash = os.environ.get('SECRETSERVICE_HASH')
     if not sshash:
         raise RuntimeError('No SECRETSERVICE_HASH set in environment.')
     print('Generating Ignition JSON..')
     for instance in sorted(INSTANCES):
-        version = INSTANCES[instance]
+        hkjninfra_version = INSTANCES[instance]
         checksums = {}
-        print('Using checksums from version {} for {}..'.format(version, instance))
+        print('Using checksums from version {} for {}..'.format(hkjninfra_version, instance))
         try:
-            checksums = get_checksums(version)
+            checksums = get_checksums(hkjninfra_version)
         except IOError as ioerr:
             raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
         for release_file in sorted(checksums):
-            print('Checksum for {} {}: {}'.format(release_file, version, checksums[release_file]))
+            print('Checksum for {} {}: {}'.format(release_file, hkjninfra_version, checksums[release_file]))
 
         json_path = 'bootstrap/bootstrap_{}.json'.format(instance)
         print('Generating {}..'.format(json_path))
         with open(json_path, 'w') as json_file:
-            conf = get_config(instance, version, checksums, sshash)
+            conf = get_config(instance, hkjninfra_version, decenter_version, checksums, sshash)
             json_file.write(json.dumps(conf))
 
 
