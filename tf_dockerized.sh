@@ -26,8 +26,7 @@ run_tf() {
 	if [[ "${action}" = plan ]]; then
 		local sshash
 		sshash=$(echo $(cat /etc/secrets/secretservice/seed)'|'$(cat /etc/secrets/secretservice/salt) | sha512sum | cut -d ' ' -f1)
-		# SECRETSERVICE_HASH=${sshash} generate_ignite_configs
-		SECRETSERVICE_HASH=${sshash} python ignite.py
+		SECRETSERVICE_HASH=${sshash} generate_ignite_configs
 		if [[ $? -ne 0 ]]; then
 			echo "ignite.py failed, bailing." >&2
 			return
