@@ -105,7 +105,7 @@ resource "google_compute_instance" "core" {
   metadata {
     version = "${var.version}"
     sshKeys = "core:${var.zg0_pubkey}"
-    user-data = "${file("bootstrap/core.json")}"
+    user-data = "${file("bootstrap/bootstrap_core.json")}"
   }
   # TODO: Set sshd port in bootstrap:
   # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
@@ -138,7 +138,7 @@ resource "google_compute_instance" "decenter-world" {
   metadata {
     sshKeys = "core:${var.zg0_pubkey}"
     version = "${var.version}"
-    user-data = "${file("bootstrap/decenter_world.json")}"
+    user-data = "${file("bootstrap/bootstrap_decenter_world.json")}"
   }
 }
 
