@@ -87,7 +87,7 @@ func main() {
 	}
 	hash := lookup(c.Seed)
 	if c.FilesDir == "" {
-		c.FilesDir = "/var/www"
+		c.FilesDir = "/var/www/secretservice"
 	}
 	if c.Addr == "" {
 		c.Addr = ":443"
@@ -105,7 +105,7 @@ func main() {
 		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			Cache:      autocert.DirCache("/etc/secrets/acme/"),
-			HostPolicy: autocert.HostWhitelist("admin.hkjn.me"),
+			HostPolicy: autocert.HostWhitelist("admin1.hkjn.me"),
 		}
 		s.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
 		log.Fatal(s.ListenAndServeTLS("", ""))

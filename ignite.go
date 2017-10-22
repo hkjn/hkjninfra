@@ -21,7 +21,7 @@ const (
 
 type (
 	fileVerification struct{
-		Hash string `json:"hash"`
+		Hash string `json:"hash,omitempty"`
 	}
 	fileContents struct{
 		Source string `json:"source"`
@@ -33,7 +33,7 @@ type (
 		Contents fileContents `json:"contents"`
 		Mode int `json:"mode"`
 		User map[string]string `json:"user"`
-		Group map[string]string `json:"version"`
+		Group map[string]string `json:"group"`
 	}
 	storage struct{
 		Filesystem []string `json:"filesystem"`
@@ -46,7 +46,7 @@ type (
 	systemdUnit struct{
 		Enable bool `json:"enable"`
 		Name string `json:"name"`
-		Contents string `json:"contents"`
+		Contents string `json:"contents,omitempty"`
 		Dropins []systemdDropin `json:"dropins,omitempty"`
 	}
 	systemd struct{
@@ -91,7 +91,7 @@ func (b binary) toFile() file {
 		Contents: fileContents{
 			Source: b.url,
 			Verification: fileVerification{
-				Hash: b.checksum,
+				Hash: fmt.Sprintf("sha512-%s", b.checksum),
 			},
 		},
 		Mode: 493,
@@ -182,7 +182,7 @@ func (n node) write(bc config) error {
 	defer f.Close()
 	bc.Storage.Files = append(bc.Storage.Files, n.getFiles()...)
 	bc.Systemd.Units = append(bc.Systemd.Units, n.getSystemdUnits()...)
-	log.Printf("Serializing json to JSON..\n")
+	log.Printf("Serializing bootstrap/%s.json..\n", n.name)
 	bc.serialize(f)
 	return nil
 }
@@ -198,7 +198,7 @@ func newConfig() config {
 			Files: []file{
 				file{
 					Filesystem: "root",
-					Path: "/etc/coreos.update.conf",
+					Path: "/etc/coreos/update.conf",
 					Contents: fileContents{
 						Source: "data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22",
 						Verification: fileVerification{},
@@ -223,7 +223,8 @@ func (c config) serialize(w io.Writer) error {
 
 // getBinaries returns the binaries for specified version of project.
 func getBinaries(project, version, arch, sshash string) ([]binary, error) {
-	checksum_data, err := ioutil.ReadFile(fmt.Sprintf("checksums/%s_%s.sha512", project, version))
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", project, version)
+	checksum_data, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
 		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", project, version, err)
 	}
@@ -234,20 +235,24 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 		}
 		parts := strings.Fields(line)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid line in checksum file %s.sha512: %q", version, line)
+			return nil, fmt.Errorf("invalid line in checksum file %s: %q", checksumFile, line)
 		}
 		checksums[parts[1]] = parts[0]
 	}
 
 	type nodeFile struct {
-		name, path, url string
+		name, checksumKey, path, url string
 	}
 	mustLoadFiles := func(nodeFiles ...nodeFile) ([]binary, error) {
 		binaries := []binary{}
 		for _, file := range nodeFiles {
-			checksum, exists := checksums[file.name]
+			key := file.checksumKey
+			if key == "" {
+				key = file.name
+			}
+			checksum, exists := checksums[key]
 			if !exists {
-				return nil, fmt.Errorf("missing checksum for %s", file.name)
+				return nil, fmt.Errorf("missing checksum %q in %s", key, checksumFile)
 			}
 			binaries = append(binaries, binary{
 				url: file.url,
@@ -280,7 +285,6 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 	} else if project == "bitcoin" {
 		return nil, nil
 	} else if project == "decenter.world" {
-		// TODO: client.pem, client-key.pem
 		return mustLoadFiles(
 			nodeFile{
 				name: fmt.Sprintf("decenter_world_%s", arch),
@@ -291,6 +295,18 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 				name: fmt.Sprintf("decenter_redirector_%s", arch),
 				path: "/opt/bin/decenter_redirector",
 				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", project, version, "decenter_redirector", arch),
+			},
+			nodeFile{
+				name: "client.pem",
+				checksumKey: "decenter.world.pem",
+				path: "/etc/ssl/client.pem",
+				url: fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem"),
+			},
+			nodeFile{
+				name: "client-key.pem",
+				checksumKey: "decenter.world-key.pem",
+				path: "/etc/ssl/client-key.pem",
+				url: fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world-key.pem"),
 			},
 		)
 	}
@@ -324,17 +340,18 @@ func getUnits(project string) ([]systemdUnit, error) {
 		return append(units, *dropin), nil
 	}
 	if project == "hkjninfra" {
-		units, err := mustLoadUnits("tclient.service", "tclient.timer")
+		return mustLoadUnits("tclient.service", "tclient.timer")
+	} else if project == "bitcoin" {
+		units, err := mustLoadUnits(
+			"bitcoin.service",
+			"containers.mount",
+		)
+
 		return alsoMustLoadDropin(
 			units,
 			err,
 			"docker.service",
 			"10_override_storage.conf",
-		)
-	} else if project == "bitcoin" {
-		return mustLoadUnits(
-			"bitcoin.service",
-			"containers.mount",
 		)
 	} else if project == "decenter.world" {
 		return mustLoadUnits(
@@ -356,6 +373,8 @@ func getSecretServiceHash() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	seed = []byte(strings.TrimSpace(string(seed)))
+	salt = []byte(strings.TrimSpace(string(salt)))
 	val := fmt.Sprintf("%s|%s\n", seed, salt)
 	digest := sha512.Sum512([]byte(val))
 	return fmt.Sprintf("%x", digest), nil
@@ -376,7 +395,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
 	}
-	log.Printf("Read %d character secret service hash\n", len(sshash))
+	log.Printf("Read %d character secret service hash: %q\n", len(sshash), sshash)
 
 	ns, err := nc.getNodes(sshash)
 	if err != nil {

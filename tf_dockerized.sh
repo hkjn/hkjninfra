@@ -1,7 +1,7 @@
 show_ignite_diff() {
 	local target
 	target=${1}
-	if [[ ! -e bootstrap/bootstrap_${target}.json ]]; then
+	if [[ ! -e bootstrap/${target}.json ]]; then
 		echo "Unknown target ${target}." >&2
 		return 1
 	fi
@@ -9,7 +9,15 @@ show_ignite_diff() {
 	if [[ $? -ne 0 ]]; then
 		echo "tf output command failed: $(cat /tmp/${target}_output.json)" >&2
 	fi
-	diff <(jq '.' < /tmp/${target}_output.json) <(jq '.' < bootstrap/bootstrap_${target}.json)
+	diff <(jq '.' < /tmp/${target}_output.json) <(jq '.' < bootstrap/${target}.json)
+}
+
+generate_ignite_configs() {
+	docker run --rm -it \
+	           -v /etc/secrets/secretservice:/etc/secrets/secretservice:ro \
+	           -v $(pwd):/home/go/src/hkjn.me/hkjninfra \
+	           -w /home/go/src/hkjn.me/hkjninfra \
+	       hkjn/golang go run ignite.go
 }
 
 run_tf() {
@@ -18,7 +26,7 @@ run_tf() {
 	if [[ "${action}" = plan ]]; then
 		local sshash
 		sshash=$(echo $(cat /etc/secrets/secretservice/seed)'|'$(cat /etc/secrets/secretservice/salt) | sha512sum | cut -d ' ' -f1)
-		SECRETSERVICE_HASH=${sshash} python ignite.py
+		SECRETSERVICE_HASH=${sshash} generate_ignite_configs
 		if [[ $? -ne 0 ]]; then
 			echo "ignite.py failed, bailing." >&2
 			return
