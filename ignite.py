@@ -216,7 +216,7 @@ def run():
         try:
             checksums = get_checksums(hkjninfra_version)
         except IOError as ioerr:
-            raise RuntimeError('Checksums unavailable: {}'.format(version, ioerr))
+            raise RuntimeError('Checksums unavailable: {}'.format(hkjninfra_version, ioerr))
         for release_file in sorted(checksums):
             print('Checksum for {} {}: {}'.format(release_file, hkjninfra_version, checksums[release_file]))
 
