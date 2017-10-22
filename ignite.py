@@ -1,7 +1,4 @@
-#!usr/bin/env python
-#
-# Create Ignition JSON for specified instance.
-#
+
 import json
 import os
 
