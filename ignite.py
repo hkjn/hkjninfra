@@ -8,7 +8,7 @@ import os
 
 INSTANCES = {
     'core': '1.4.3',
-    'decenter_world': '1.4.5',
+    'decenter_world': '1.5.0',
     #'builder': '1.2.5',
 }
 
