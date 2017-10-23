@@ -119,9 +119,9 @@ type (
 	// projectFiles represents the systemd files to include for a project.
 	projectFiles struct{
 		// units are the names of the systemd units for the project
-		units []string
+		unitNames []string
 		// dropins are the names of the systemd units and overrides for the project
-		dropins []dropinName
+		dropinNames []dropinName
 	}
 	// nodeConfigs is the configuration of all nodes
 	nodeConfigs map[nodeName]nodeConfig
@@ -327,17 +327,17 @@ func getBinaries(name projectName, v version, arch, sshash string) ([]binary, er
 	return nil, fmt.Errorf("bug: unknown project %q", name)
 }
 
-// load returns the systemd units for the project.
+// loadUnits returns the systemd units for the project.
 func (pf projectFiles) loadUnits() ([]systemdUnit, error) {
 	units := []systemdUnit{}
-	for _, unitFile := range pf.units {
+	for _, unitFile := range pf.unitNames {
 		unit, err := newSystemdUnit(unitFile)
 		if err != nil {
 			return nil, err
 		}
 		units = append(units, *unit)
 	}
-	for _, d := range pf.dropins {
+	for _, d := range pf.dropinNames {
 		dropin, err := d.load()
 		if err != nil {
 			return nil, err
@@ -415,17 +415,17 @@ func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
 func main() {
 	pc := getProjectConfigs(map[projectName]projectFiles{
 		"hkjninfra": {
-			units: []string{
+			unitNames: []string{
 				"tclient.service",
 				"tclient.timer",
 			},
 		},
 		"bitcoin": {
-			units: []string{
+			unitNames: []string{
 				"bitcoin.service",
 				"containers.mount", // TODO: better name
 			},
-			dropins: []dropinName{
+			dropinNames: []dropinName{
 				{
 					unit: "docker.service",
 					dropin: "10_override_storage.conf",
@@ -433,7 +433,7 @@ func main() {
 			},
 		},
 		"decenter.world": {
-			units: []string{
+			unitNames: []string{
 				"decenter.service",
 				"decenter_redirector.service",
 				"etc-secrets.mount",
