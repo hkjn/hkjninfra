@@ -106,8 +106,8 @@ type (
 	dropinName struct{
 		unit, dropin string
 	}
-	projectConfigs map[projectName]projectConfig
-	projectConfig struct{
+	// projectFiles represents the systemd files to include for a project.
+	projectFiles struct{
 		// units are the names of the systemd units for the project
 		units []string
 		// dropins are the names of the systemd units and overrides for the project
@@ -318,16 +318,16 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 }
 
 // getUnits returns the systemd units for the project.
-func (p project) getUnits(conf projectConfig) ([]systemdUnit, error) {
+func (p project) getUnits(f projectFiles) ([]systemdUnit, error) {
 	units := []systemdUnit{}
-	for _, unitFile := range conf.units {
+	for _, unitFile := range f.units {
 		unit, err := newSystemdUnit(unitFile)
 		if err != nil {
 			return nil, err
 		}
 		units = append(units, *unit)
 	}
-	for _, d := range conf.dropins {
+	for _, d := range f.dropins {
 		dropin, err := d.load()
 		if err != nil {
 			return nil, err
@@ -355,7 +355,7 @@ func getSecretServiceHash() (string, error) {
 }
 
 // newNode returns a new node created from the config.
-func (nc nodeConfig) newNode(sshash string, pc projectConfigs) (*node, error) {
+func (nc nodeConfig) newNode(sshash string, pf map[projectName]projectFiles) (*node, error) {
 	bins := []binary{}
 	for _, p := range nc.projects {
 		newbins, err := p.getBinaries(nc.arch, sshash)
@@ -367,7 +367,7 @@ func (nc nodeConfig) newNode(sshash string, pc projectConfigs) (*node, error) {
 	// TODO: could version the systemd units as well.
 	units := []systemdUnit{}
 	for _, p := range nc.projects {
-		c := pc[p.name]
+		c := pf[p.name]
 		newunits, err := p.getUnits(c)
 		if err != nil {
 			return nil, err
@@ -382,11 +382,11 @@ func (nc nodeConfig) newNode(sshash string, pc projectConfigs) (*node, error) {
 }
 
 // createNodes returns nodes created from the configs.
-func (nc nodeConfigs) createNodes(sshash string, pc projectConfigs) (nodes, error) {
+func (nc nodeConfigs) createNodes(sshash string, pf map[projectName]projectFiles) (nodes, error) {
 	result := nodes{}
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
-		n, err := conf.newNode(sshash, pc)
+		n, err := conf.newNode(sshash, pf)
 		if err != nil {
 			return nil, err
 		}
@@ -396,7 +396,7 @@ func (nc nodeConfigs) createNodes(sshash string, pc projectConfigs) (nodes, erro
 }
 
 func main() {
-	pc := projectConfigs{
+	pf := map[projectName]projectFiles{
 		"hkjninfra": {
 			units: []string{
 				"tclient.service",
@@ -458,7 +458,7 @@ func main() {
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
 
-	ns, err := nc.createNodes(sshash, pc)
+	ns, err := nc.createNodes(sshash, pf)
 	if err != nil {
 		log.Fatalf("Unable to get node versions: %v\n", err)
 	}
