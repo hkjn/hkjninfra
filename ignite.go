@@ -1,6 +1,7 @@
 // ignite.go generates Ignite JSON configs.
 //
 // TODO: Update fetch to generate checksums/ correctly, including for secrets.
+// TODO: could version the systemd units as well.
 package main
 
 import (
@@ -384,28 +385,18 @@ func (ps projects) getUnits() []systemdUnit {
 	return units
 }
 
-// newNode returns a new node created from the config.
-func (nc nodeConfig) newNode(sshash string) (*node, error) {
-	// TODO: could version the systemd units as well.
-	return &node{
-		name: nc.name,
-		binaries: nc.projects.getBinaries(sshash),
-		systemdUnits: nc.projects.getUnits(),
-	}, nil
-}
-
 // createNodes returns nodes created from the configs.
-func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
+func (nc nodeConfigs) createNodes(sshash string) nodes {
 	result := nodes{}
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
-		n, err := conf.newNode(sshash)
-		if err != nil {
-			return nil, err
+		result[name] = node{
+			name: name,
+			binaries: conf.projects.getBinaries(sshash),
+			systemdUnits: conf.projects.getUnits(),
 		}
-		result[name] = *n
 	}
-	return result, nil
+	return result
 }
 
 // getProjectConfigs returns the project configs, given files to load.
@@ -488,14 +479,7 @@ func main() {
 		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
-
-	ns, err := nc.createNodes(sshash)
-	if err != nil {
-		log.Fatalf("Unable to get node versions: %v\n", err)
-	}
-	log.Printf("Parsed configs for %d nodes.\n", len(ns))
-
-	for _, n := range ns {
+	for _, n := range nc.createNodes(sshash) {
 		log.Printf("Writing Ignition config for %v..\n", n)
 		err := n.write()
 		if err != nil {
