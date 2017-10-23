@@ -93,6 +93,8 @@ type (
 		name projectName
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
 		version string
+
+		files projectFiles
 	}
 	// nodeConfig is the configuration of a single node
 	nodeConfig struct{
@@ -318,16 +320,16 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 }
 
 // getUnits returns the systemd units for the project.
-func (p project) getUnits(f projectFiles) ([]systemdUnit, error) {
+func (p project) getUnits() ([]systemdUnit, error) {
 	units := []systemdUnit{}
-	for _, unitFile := range f.units {
+	for _, unitFile := range p.files.units {
 		unit, err := newSystemdUnit(unitFile)
 		if err != nil {
 			return nil, err
 		}
 		units = append(units, *unit)
 	}
-	for _, d := range f.dropins {
+	for _, d := range p.files.dropins {
 		dropin, err := d.load()
 		if err != nil {
 			return nil, err
@@ -355,7 +357,7 @@ func getSecretServiceHash() (string, error) {
 }
 
 // newNode returns a new node created from the config.
-func (nc nodeConfig) newNode(sshash string, pf map[projectName]projectFiles) (*node, error) {
+func (nc nodeConfig) newNode(sshash string) (*node, error) {
 	bins := []binary{}
 	for _, p := range nc.projects {
 		newbins, err := p.getBinaries(nc.arch, sshash)
@@ -367,8 +369,7 @@ func (nc nodeConfig) newNode(sshash string, pf map[projectName]projectFiles) (*n
 	// TODO: could version the systemd units as well.
 	units := []systemdUnit{}
 	for _, p := range nc.projects {
-		c := pf[p.name]
-		newunits, err := p.getUnits(c)
+		newunits, err := p.getUnits()
 		if err != nil {
 			return nil, err
 		}
@@ -382,11 +383,11 @@ func (nc nodeConfig) newNode(sshash string, pf map[projectName]projectFiles) (*n
 }
 
 // createNodes returns nodes created from the configs.
-func (nc nodeConfigs) createNodes(sshash string, pf map[projectName]projectFiles) (nodes, error) {
+func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
 	result := nodes{}
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
-		n, err := conf.newNode(sshash, pf)
+		n, err := conf.newNode(sshash)
 		if err != nil {
 			return nil, err
 		}
@@ -431,9 +432,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
+					files: pf["hkjninfra"],
 				}, {
 					name: "bitcoin",
 					version: "0.0.15",
+					files: pf["bitcoin"],
 				},
 			},
 		},
@@ -444,9 +447,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
+					files: pf["hkjninfra"],
 				}, {
 					name: "decenter.world",
 					version: "1.1.7",
+					files: pf["decenter.world"],
 				},
 			},
 		},
@@ -458,7 +463,7 @@ func main() {
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
 
-	ns, err := nc.createNodes(sshash, pf)
+	ns, err := nc.createNodes(sshash)
 	if err != nil {
 		log.Fatalf("Unable to get node versions: %v\n", err)
 	}
