@@ -151,44 +151,6 @@ func newSystemdDropin(unitFile, dropinFile string) (*systemdUnit, error) {
 	}, nil
 }
 
-func (nc nodeConfigs) getNodes(sshash string) (nodes, error) {
-	result := nodes{}
-	for name, conf := range nc {
-		log.Printf("Generating config for node %q..\n", name)
-		n, err := conf.getNode(sshash)
-		if err != nil {
-			return nil, err
-		}
-		result[name] = *n
-	}
-	return result, nil
-}
-
-func (nc nodeConfig) getNode(sshash string) (*node, error) {
-	bins := []binary{}
-	for _, p := range nc.projects {
-		newbins, err := p.getBinaries(nc.arch, sshash)
-		if err != nil {
-			return nil, err
-		}
-		bins = append(bins, newbins...)
-	}
-	// TODO: could version the systemd units as well.
-	units := []systemdUnit{}
-	for _, p := range nc.projects {
-		newunits, err := p.getUnits()
-		if err != nil {
-			return nil, err
-		}
-		units = append(units, newunits...)
-	}
-	return &node{
-		name: nc.name,
-		binaries: bins,
-		systemdUnits: units,
-	}, nil
-}
-
 func (n node) getFiles() []file {
 	result := []file{}
 	for _, bin := range n.binaries {
@@ -413,6 +375,46 @@ func getSecretServiceHash() (string, error) {
 	return fmt.Sprintf("%x", digest), nil
 }
 
+// newNode returns a new node created from the config.
+func (nc nodeConfig) newNode(sshash string) (*node, error) {
+	bins := []binary{}
+	for _, p := range nc.projects {
+		newbins, err := p.getBinaries(nc.arch, sshash)
+		if err != nil {
+			return nil, err
+		}
+		bins = append(bins, newbins...)
+	}
+	// TODO: could version the systemd units as well.
+	units := []systemdUnit{}
+	for _, p := range nc.projects {
+		newunits, err := p.getUnits()
+		if err != nil {
+			return nil, err
+		}
+		units = append(units, newunits...)
+	}
+	return &node{
+		name: nc.name,
+		binaries: bins,
+		systemdUnits: units,
+	}, nil
+}
+
+// createNodes returns nodes created from the configs.
+func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
+	result := nodes{}
+	for name, conf := range nc {
+		log.Printf("Generating config for node %q..\n", name)
+		n, err := conf.newNode(sshash)
+		if err != nil {
+			return nil, err
+		}
+		result[name] = *n
+	}
+	return result, nil
+}
+
 func main() {
 	nc := nodeConfigs{
 		"core": nodeConfig{
@@ -449,7 +451,7 @@ func main() {
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
 
-	ns, err := nc.getNodes(sshash)
+	ns, err := nc.createNodes(sshash)
 	if err != nil {
 		log.Fatalf("Unable to get node versions: %v\n", err)
 	}
