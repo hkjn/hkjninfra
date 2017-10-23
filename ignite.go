@@ -87,10 +87,11 @@ type (
 	}
 
 	nodes map[nodeName]node
+	projectName string
 	// project is something that a node should run
 	project struct {
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
-		name string
+		name projectName
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
 		version string
 	}
@@ -102,6 +103,14 @@ type (
 		projects []project
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
 		arch string
+	}
+	dropinName struct{
+		unit, dropin string
+	}
+	projectConfigs map[projectName]projectConfig
+	projectConfig struct{
+		units []string
+		dropins []dropinName
 	}
 	// nodeConfigs is the configuration of all nodes
 	nodeConfigs map[nodeName]nodeConfig
@@ -310,53 +319,23 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 }
 
 // getUnits returns the systemd units for the project.
-func (p project) getUnits() ([]systemdUnit, error) {
-	mustLoadUnits := func (unitFiles ...string) ([]systemdUnit, error) {
-		units := []systemdUnit{}
-		for _, unitFile := range unitFiles {
-			unit, err := newSystemdUnit(unitFile)
-			if err != nil {
-				return nil, err
-			}
-			units = append(units, *unit)
-		}
-		return units, nil
-	}
-	alsoMustLoadDropin := func(
-		units []systemdUnit,
-		err error, unitFile,
-		dropinFile string) ([]systemdUnit, error) {
+func (p project) getUnits(conf projectConfig) ([]systemdUnit, error) {
+	units := []systemdUnit{}
+	for _, unitFile := range conf.units {
+		unit, err := newSystemdUnit(unitFile)
 		if err != nil {
 			return nil, err
 		}
-		dropin, err := newSystemdDropin(unitFile, dropinFile)
+		units = append(units, *unit)
+	}
+	for _, d := range conf.dropins {
+		dropin, err := newSystemdDropin(d.unit, d.dropin)
 		if err != nil {
 			return nil, err
 		}
-		return append(units, *dropin), nil
+		units = append(units, *dropin)
 	}
-	if p.name == "hkjninfra" {
-		return mustLoadUnits("tclient.service", "tclient.timer")
-	} else if p.name == "bitcoin" {
-		units, err := mustLoadUnits(
-			"bitcoin.service",
-			"containers.mount",
-		)
-		return alsoMustLoadDropin(
-			units,
-			err,
-			"docker.service",
-			"10_override_storage.conf",
-		)
-	} else if p.name == "decenter.world" {
-		return mustLoadUnits(
-			"decenter.service",
-			"decenter_redirector.service",
-			"etc-secrets.mount",
-		)
-	} else {
-		return nil, fmt.Errorf("unknown project: %q", p.name)
-	}
+	return units, nil
 }
 
 func getSecretServiceHash() (string, error) {
@@ -376,7 +355,7 @@ func getSecretServiceHash() (string, error) {
 }
 
 // newNode returns a new node created from the config.
-func (nc nodeConfig) newNode(sshash string) (*node, error) {
+func (nc nodeConfig) newNode(sshash string, pc projectConfigs) (*node, error) {
 	bins := []binary{}
 	for _, p := range nc.projects {
 		newbins, err := p.getBinaries(nc.arch, sshash)
@@ -388,7 +367,8 @@ func (nc nodeConfig) newNode(sshash string) (*node, error) {
 	// TODO: could version the systemd units as well.
 	units := []systemdUnit{}
 	for _, p := range nc.projects {
-		newunits, err := p.getUnits()
+		c := pc[p.name]
+		newunits, err := p.getUnits(c)
 		if err != nil {
 			return nil, err
 		}
@@ -402,11 +382,11 @@ func (nc nodeConfig) newNode(sshash string) (*node, error) {
 }
 
 // createNodes returns nodes created from the configs.
-func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
+func (nc nodeConfigs) createNodes(sshash string, pc projectConfigs) (nodes, error) {
 	result := nodes{}
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
-		n, err := conf.newNode(sshash)
+		n, err := conf.newNode(sshash, pc)
 		if err != nil {
 			return nil, err
 		}
@@ -416,6 +396,33 @@ func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
 }
 
 func main() {
+	pc := projectConfigs{
+		"hkjninfra": {
+			units: []string{
+				"tclient.service",
+				"tclient.timer",
+			},
+		},
+		"bitcoin": {
+			units: []string{
+				"bitcoin.service",
+				"containers.mount", // TODO: better name
+			},
+			dropins: []dropinName{
+				{
+					unit: "docker.service",
+					dropin: "10_override_storage.conf",
+				},
+			},
+		},
+		"decenter.world": {
+			units: []string{
+				"decenter.service",
+				"decenter_redirector.service",
+				"etc-secrets.mount",
+			},
+		},
+	}
 	nc := nodeConfigs{
 		"core": nodeConfig{
 			name: "core",
@@ -451,7 +458,7 @@ func main() {
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
 
-	ns, err := nc.createNodes(sshash)
+	ns, err := nc.createNodes(sshash, pc)
 	if err != nil {
 		log.Fatalf("Unable to get node versions: %v\n", err)
 	}
