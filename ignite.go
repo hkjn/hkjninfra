@@ -364,14 +364,10 @@ func getSecretServiceHash() (string, error) {
 	return fmt.Sprintf("%x", digest), nil
 }
 
-func (ps projects) getBinaries(sshash, arch string) []binary {
+func (ps projects) getBinaries() []binary {
 	bins := []binary{}
 	for _, p := range ps {
-		b, err := getBinaries(p.name, p.version, arch, sshash)
-		if err != nil {
-			log.Fatalf("Failed to load binaries for %q: %v\n", p.name, err)
-		}
-		bins = append(bins, b...)
+		bins = append(bins, p.binaries...)
 	}
 	return bins
 }
@@ -385,13 +381,13 @@ func (ps projects) getUnits() []systemdUnit {
 }
 
 // createNodes returns nodes created from the configs.
-func (nc nodeConfigs) createNodes(sshash string) nodes {
+func (nc nodeConfigs) createNodes() nodes {
 	result := nodes{}
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
 		result[name] = node{
 			name: name,
-			binaries: conf.projects.getBinaries(sshash, conf.arch),
+			binaries: conf.projects.getBinaries(),
 			systemdUnits: conf.projects.getUnits(),
 		}
 	}
@@ -411,8 +407,40 @@ func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
 	return conf
 }
 
+// newNodeConfigs returns the complete node configs, with systemd units and binaries included.
+func newNodeConfigs(pc projectConfig, sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
+	result := nodeConfigs{}
+	for _, nc := range baseConf{
+		nc := nc
+		projects := make([]project, len(nc.projects), len(nc.projects))
+		for i, p := range nc.projects {
+			p := p
+			units, exists := pc[p.name]
+			if !exists {
+				return nil, fmt.Errorf("bug: missing projectConfig for %q", nc.name)
+			}
+			p.units = units
+			bins, err := getBinaries(p.name, p.version, nc.arch, sshash)
+			if err != nil {
+				return nil, err
+			}
+			p.binaries = bins
+			projects[i] = p
+		}
+		nc.projects = projects
+		result[nc.name] = nc
+	}
+	return result, nil
+}
+
 
 func main() {
+	sshash, err := getSecretServiceHash()
+	if err != nil {
+		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
+	}
+	log.Printf("Read %d character secret service hash.\n", len(sshash))
+
 	pc := getProjectConfigs(map[projectName]projectFiles{
 		"hkjninfra": {
 			unitNames: []string{
@@ -440,45 +468,38 @@ func main() {
 			},
 		},
 	})
-	nc := nodeConfigs{
-		"core": nodeConfig{
+	nc, err := newNodeConfigs(pc, sshash, []nodeConfig{
+		{
 			name: "core",
 			arch: "x86_64",
 			projects: []project{
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					units: pc["hkjninfra"],
 				}, {
 					name: "bitcoin",
 					version: "0.0.15",
-					units: pc["bitcoin"],
 				},
 			},
-		},
-		"decenter_world": nodeConfig{
+		}, {
 			name: "decenter_world",
 			arch: "x86_64",
 			projects: []project{
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					units: pc["hkjninfra"],
 				}, {
 					name: "decenter.world",
 					version: "1.1.7",
-					units: pc["decenter.world"],
 				},
 			},
 		},
+	})
+	if err != nil {
+		log.Fatalf("Failed to create node configs: %v\n", err)
 	}
 
-	sshash, err := getSecretServiceHash()
-	if err != nil {
-		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
-	}
-	log.Printf("Read %d character secret service hash.\n", len(sshash))
-	for _, n := range nc.createNodes(sshash) {
+	for _, n := range nc.createNodes() {
 		log.Printf("Writing Ignition config for %v..\n", n)
 		err := n.write()
 		if err != nil {
