@@ -364,10 +364,9 @@ func getSecretServiceHash() (string, error) {
 	return fmt.Sprintf("%x", digest), nil
 }
 
-func (ps projects) getBinaries(sshash string) []binary {
+func (ps projects) getBinaries(sshash, arch string) []binary {
 	bins := []binary{}
 	for _, p := range ps {
-		arch := "x86_64"
 		b, err := getBinaries(p.name, p.version, arch, sshash)
 		if err != nil {
 			log.Fatalf("Failed to load binaries for %q: %v\n", p.name, err)
@@ -392,7 +391,7 @@ func (nc nodeConfigs) createNodes(sshash string) nodes {
 		log.Printf("Generating config for node %q..\n", name)
 		result[name] = node{
 			name: name,
-			binaries: conf.projects.getBinaries(sshash),
+			binaries: conf.projects.getBinaries(sshash, conf.arch),
 			systemdUnits: conf.projects.getUnits(),
 		}
 	}
