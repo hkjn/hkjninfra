@@ -94,14 +94,16 @@ type (
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
 		version string
 
-		files projectFiles
+		units []systemdUnit
 	}
+	// projects is a list of projects that a node should run
+	projects []project
 	// nodeConfig is the configuration of a single node
 	nodeConfig struct{
 		// name is the name of the node
 		name nodeName
 		// projects is all the projects the node should run
-		projects []project
+		projects projects
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
 		arch string
 	}
@@ -319,17 +321,17 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 	return nil, fmt.Errorf("bug: unknown project %q", p.name)
 }
 
-// getUnits returns the systemd units for the project.
-func (p project) getUnits() ([]systemdUnit, error) {
+// load returns the systemd units for the project.
+func (pf projectFiles) load() ([]systemdUnit, error) {
 	units := []systemdUnit{}
-	for _, unitFile := range p.files.units {
+	for _, unitFile := range pf.units {
 		unit, err := newSystemdUnit(unitFile)
 		if err != nil {
 			return nil, err
 		}
 		units = append(units, *unit)
 	}
-	for _, d := range p.files.dropins {
+	for _, d := range pf.dropins {
 		dropin, err := d.load()
 		if err != nil {
 			return nil, err
@@ -356,6 +358,14 @@ func getSecretServiceHash() (string, error) {
 	return fmt.Sprintf("%x", digest), nil
 }
 
+func (ps projects) getUnits() []systemdUnit {
+	units := []systemdUnit{}
+	for _, p := range ps {
+		units = append(units, p.units...)
+	}
+	return units
+}
+
 // newNode returns a new node created from the config.
 func (nc nodeConfig) newNode(sshash string) (*node, error) {
 	bins := []binary{}
@@ -367,18 +377,10 @@ func (nc nodeConfig) newNode(sshash string) (*node, error) {
 		bins = append(bins, newbins...)
 	}
 	// TODO: could version the systemd units as well.
-	units := []systemdUnit{}
-	for _, p := range nc.projects {
-		newunits, err := p.getUnits()
-		if err != nil {
-			return nil, err
-		}
-		units = append(units, newunits...)
-	}
 	return &node{
 		name: nc.name,
 		binaries: bins,
-		systemdUnits: units,
+		systemdUnits: nc.projects.getUnits(),
 	}, nil
 }
 
@@ -397,7 +399,7 @@ func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
 }
 
 func main() {
-	pf := map[projectName]projectFiles{
+	ps := map[projectName]projectFiles{
 		"hkjninfra": {
 			units: []string{
 				"tclient.service",
@@ -424,6 +426,14 @@ func main() {
 			},
 		},
 	}
+	projectConfigs := map[projectName][]systemdUnit{}
+	for name, files := range ps {
+		units, err := files.load()
+		if err != nil {
+			log.Fatalf("Failed to load systemd units: %v\n", err)
+		}
+		projectConfigs[name] = units
+	}
 	nc := nodeConfigs{
 		"core": nodeConfig{
 			name: "core",
@@ -432,11 +442,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					files: pf["hkjninfra"],
+					units: projectConfigs["hkjninfra"],
 				}, {
 					name: "bitcoin",
 					version: "0.0.15",
-					files: pf["bitcoin"],
+					units: projectConfigs["bitcoin"],
 				},
 			},
 		},
@@ -447,11 +457,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					files: pf["hkjninfra"],
+					units: projectConfigs["hkjninfra"],
 				}, {
 					name: "decenter.world",
 					version: "1.1.7",
-					files: pf["decenter.world"],
+					units: projectConfigs["decenter.world"],
 				},
 			},
 		},
