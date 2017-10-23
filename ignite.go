@@ -73,6 +73,8 @@ type (
 		// path on the remote node for the binary, e.g. "/opt/bin/tserver"
 		path string
 	}
+	version string
+	binaries map[version][]binary
 	// nodeName is the name of a node, e.g. "core"
 	nodeName string
 	// node is a single instance
@@ -92,9 +94,11 @@ type (
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
 		name projectName
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
-		version string
-
+		version version
+		// units are the systemd units for the project
 		units []systemdUnit
+		// binaries are the binaries needed for the project
+		binaries []binary
 	}
 	projectConfig map[projectName][]systemdUnit
 	// projects is a list of projects that a node should run
@@ -231,11 +235,11 @@ func newIgnitionConfig() ignitionConfig {
 }
 
 // getBinaries returns the binaries for project.
-func (p project) getBinaries(arch, sshash string) ([]binary, error) {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.name, p.version)
+func getBinaries(name projectName, v version, arch, sshash string) ([]binary, error) {
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", name, v)
 	checksum_data, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", p.name, p.version, err)
+		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", name, v, err)
 	}
 	checksums := map[string]string{}
 	for _, line := range strings.Split(string(checksum_data), "\n") {
@@ -272,17 +276,17 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 		return binaries, nil
 	}
 
-	if p.name == "hkjninfra" {
+	if name == "hkjninfra" {
 		return mustLoadFiles(
 			nodeFile{
 				name: "gather_facts",
 				path: "/opt/bin/gather_facts",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", p.name, p.version, "gather_facts"),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", name, v, "gather_facts"),
 			},
 			nodeFile{
 				name: fmt.Sprintf("tclient_%s", arch),
 				path: "/opt/bin/tclient",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "tclient", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "tclient", arch),
 			},
 			nodeFile{
 				name: "mon_ca.pem",
@@ -291,19 +295,19 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 			},
 		)
 		// TODO: versioning for secretservice URLs
-	} else if p.name == "bitcoin" {
+	} else if name == "bitcoin" {
 		return nil, nil
-	} else if p.name == "decenter.world" {
+	} else if name == "decenter.world" {
 		return mustLoadFiles(
 			nodeFile{
 				name: fmt.Sprintf("decenter_world_%s", arch),
 				path: "/opt/bin/decenter_world",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "decenter_world", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "decenter_world", arch),
 			},
 			nodeFile{
 				name: fmt.Sprintf("decenter_redirector_%s", arch),
 				path: "/opt/bin/decenter_redirector",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "decenter_redirector", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "decenter_redirector", arch),
 			},
 			nodeFile{
 				name: "client.pem",
@@ -319,11 +323,11 @@ func (p project) getBinaries(arch, sshash string) ([]binary, error) {
 			},
 		)
 	}
-	return nil, fmt.Errorf("bug: unknown project %q", p.name)
+	return nil, fmt.Errorf("bug: unknown project %q", name)
 }
 
 // load returns the systemd units for the project.
-func (pf projectFiles) load() ([]systemdUnit, error) {
+func (pf projectFiles) loadUnits() ([]systemdUnit, error) {
 	units := []systemdUnit{}
 	for _, unitFile := range pf.units {
 		unit, err := newSystemdUnit(unitFile)
@@ -359,6 +363,19 @@ func getSecretServiceHash() (string, error) {
 	return fmt.Sprintf("%x", digest), nil
 }
 
+func (ps projects) getBinaries(sshash string) []binary {
+	bins := []binary{}
+	for _, p := range ps {
+		arch := "x86_64"
+		b, err := getBinaries(p.name, p.version, arch, sshash)
+		if err != nil {
+			log.Fatalf("Failed to load binaries for %q: %v\n", p.name, err)
+		}
+		bins = append(bins, b...)
+	}
+	return bins
+}
+
 func (ps projects) getUnits() []systemdUnit {
 	units := []systemdUnit{}
 	for _, p := range ps {
@@ -369,18 +386,10 @@ func (ps projects) getUnits() []systemdUnit {
 
 // newNode returns a new node created from the config.
 func (nc nodeConfig) newNode(sshash string) (*node, error) {
-	bins := []binary{}
-	for _, p := range nc.projects {
-		newbins, err := p.getBinaries(nc.arch, sshash)
-		if err != nil {
-			return nil, err
-		}
-		bins = append(bins, newbins...)
-	}
 	// TODO: could version the systemd units as well.
 	return &node{
 		name: nc.name,
-		binaries: bins,
+		binaries: nc.projects.getBinaries(sshash),
 		systemdUnits: nc.projects.getUnits(),
 	}, nil
 }
@@ -403,7 +412,7 @@ func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
 func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
 	conf := map[projectName][]systemdUnit{}
 	for name, files := range pf {
-		units, err := files.load()
+		units, err := files.loadUnits()
 		if err != nil {
 			log.Fatalf("Failed to load systemd units: %v\n", err)
 		}
@@ -411,6 +420,7 @@ func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
 	}
 	return conf
 }
+
 
 func main() {
 	pc := getProjectConfigs(map[projectName]projectFiles{
