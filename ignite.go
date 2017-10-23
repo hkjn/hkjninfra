@@ -96,6 +96,7 @@ type (
 
 		units []systemdUnit
 	}
+	projectConfig map[projectName][]systemdUnit
 	// projects is a list of projects that a node should run
 	projects []project
 	// nodeConfig is the configuration of a single node
@@ -398,8 +399,21 @@ func (nc nodeConfigs) createNodes(sshash string) (nodes, error) {
 	return result, nil
 }
 
+// getProjectConfigs returns the project configs, given files to load.
+func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
+	conf := map[projectName][]systemdUnit{}
+	for name, files := range pf {
+		units, err := files.load()
+		if err != nil {
+			log.Fatalf("Failed to load systemd units: %v\n", err)
+		}
+		conf[name] = units
+	}
+	return conf
+}
+
 func main() {
-	ps := map[projectName]projectFiles{
+	pc := getProjectConfigs(map[projectName]projectFiles{
 		"hkjninfra": {
 			units: []string{
 				"tclient.service",
@@ -425,15 +439,7 @@ func main() {
 				"etc-secrets.mount",
 			},
 		},
-	}
-	projectConfigs := map[projectName][]systemdUnit{}
-	for name, files := range ps {
-		units, err := files.load()
-		if err != nil {
-			log.Fatalf("Failed to load systemd units: %v\n", err)
-		}
-		projectConfigs[name] = units
-	}
+	})
 	nc := nodeConfigs{
 		"core": nodeConfig{
 			name: "core",
@@ -442,11 +448,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					units: projectConfigs["hkjninfra"],
+					units: pc["hkjninfra"],
 				}, {
 					name: "bitcoin",
 					version: "0.0.15",
-					units: projectConfigs["bitcoin"],
+					units: pc["bitcoin"],
 				},
 			},
 		},
@@ -457,11 +463,11 @@ func main() {
 				{
 					name: "hkjninfra",
 					version: "1.5.0",
-					units: projectConfigs["hkjninfra"],
+					units: pc["hkjninfra"],
 				}, {
 					name: "decenter.world",
 					version: "1.1.7",
-					units: projectConfigs["decenter.world"],
+					units: pc["decenter.world"],
 				},
 			},
 		},
