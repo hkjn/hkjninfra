@@ -1,4 +1,6 @@
 // ignite.go generates Ignite JSON configs.
+//
+// TODO: Update fetch to generate checksums/ correctly, including for secrets.
 package main
 
 import (
@@ -63,7 +65,7 @@ type (
 		Storage storage `json:"storage"`
 		Systemd systemd `json:"systemd"`
 	}
-	// binary to use on a node
+	// binary to fetch on a node
 	binary struct{
 		// url to fetch binary from, e.g. "https://github.com/hkjn/hkjninfra/releases/download/1.1.7/tserver_x86_64"
 		url string
@@ -72,16 +74,37 @@ type (
 		// path on the remote node for the binary, e.g. "/opt/bin/tserver"
 		path string
 	}
+	// nodeName is the name of a node, e.g. "core"
+	nodeName string
 	// node is a single instance
 	node struct{
-		name string
+		// name is the name of the node
+		name nodeName
 		// binaries are the files to install on the node
 		binaries []binary
+		// systemdUnits are the systemd units to use for the node
 		systemdUnits []systemdUnit
 	}
-	nodes map[string]node
 
-	nodeConfig map[string]map[string]string
+	nodes map[nodeName]node
+	// project is something that a node should run
+	project struct {
+		// name is the name of a project the node should run node, e.g. "hkjninfra"
+		name string
+		// version is the version of the project that should run on the node, e.g. "1.0.1"
+		version string
+	}
+	// nodeConfig is the configuration of a single node
+	nodeConfig struct{
+		// name is the name of the node
+		name nodeName
+		// projects is all the projects the node should run
+		projects []project
+		// arch is the CPU architecture the node runs, e.g. "x86_64"
+		arch string
+	}
+	// nodeConfigs is the configuration of all nodes
+	nodeConfigs map[nodeName]nodeConfig
 )
 
 func (b binary) toFile() file {
@@ -128,34 +151,42 @@ func newSystemdDropin(unitFile, dropinFile string) (*systemdUnit, error) {
 	}, nil
 }
 
-func (nc nodeConfig) getNodes(sshash string) (nodes, error) {
+func (nc nodeConfigs) getNodes(sshash string) (nodes, error) {
 	result := nodes{}
-	for n, versions := range nc {
-		arch := "x86_64" // TODO: support other archs.
-		bins := []binary{}
-		for project, version := range versions {
-			newbins, err := getBinaries(project, version, arch, sshash)
-			if err != nil {
-				return nil, err
-			}
-			bins = append(bins, newbins...)
+	for name, conf := range nc {
+		log.Printf("Generating config for node %q..\n", name)
+		n, err := conf.getNode(sshash)
+		if err != nil {
+			return nil, err
 		}
-		// TODO: could version the systemd units as well.
-		units := []systemdUnit{}
-		for project, _ := range versions {
-			newunits, err := getUnits(project)
-			if err != nil {
-				return nil, err
-			}
-			units = append(units, newunits...)
-		}
-		result[n] = node{
-			name: n,
-			binaries: bins,
-			systemdUnits: units,
-		}
+		result[name] = *n
 	}
 	return result, nil
+}
+
+func (nc nodeConfig) getNode(sshash string) (*node, error) {
+	bins := []binary{}
+	for _, p := range nc.projects {
+		newbins, err := p.getBinaries(nc.arch, sshash)
+		if err != nil {
+			return nil, err
+		}
+		bins = append(bins, newbins...)
+	}
+	// TODO: could version the systemd units as well.
+	units := []systemdUnit{}
+	for _, p := range nc.projects {
+		newunits, err := p.getUnits()
+		if err != nil {
+			return nil, err
+		}
+		units = append(units, newunits...)
+	}
+	return &node{
+		name: nc.name,
+		binaries: bins,
+		systemdUnits: units,
+	}, nil
 }
 
 func (n node) getFiles() []file {
@@ -174,6 +205,10 @@ func (n node) getSystemdUnits() []systemdUnit {
 	return result
 }
 
+func (n node) String() string {
+	return fmt.Sprintf("%q (%d binaries, %d systemd units)", n.name, len(n.binaries), len(n.systemdUnits))
+}
+
 func (n node) write(bc config) error {
 	f, err := os.Create(fmt.Sprintf("bootstrap/%s.json", n.name))
 	if err != nil {
@@ -182,7 +217,6 @@ func (n node) write(bc config) error {
 	defer f.Close()
 	bc.Storage.Files = append(bc.Storage.Files, n.getFiles()...)
 	bc.Systemd.Units = append(bc.Systemd.Units, n.getSystemdUnits()...)
-	log.Printf("Serializing bootstrap/%s.json..\n", n.name)
 	bc.serialize(f)
 	return nil
 }
@@ -221,12 +255,12 @@ func (c config) serialize(w io.Writer) error {
 	return json.NewEncoder(w).Encode(&c)
 }
 
-// getBinaries returns the binaries for specified version of project.
-func getBinaries(project, version, arch, sshash string) ([]binary, error) {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", project, version)
+// getBinaries returns the binaries for project.
+func (p project) getBinaries(arch, sshash string) ([]binary, error) {
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.name, p.version)
 	checksum_data, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", project, version, err)
+		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", p.name, p.version, err)
 	}
 	checksums := map[string]string{}
 	for _, line := range strings.Split(string(checksum_data), "\n") {
@@ -263,17 +297,17 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 		return binaries, nil
 	}
 
-	if project == "hkjninfra" {
+	if p.name == "hkjninfra" {
 		return mustLoadFiles(
 			nodeFile{
 				name: "gather_facts",
 				path: "/opt/bin/gather_facts",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", project, version, "gather_facts"),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", p.name, p.version, "gather_facts"),
 			},
 			nodeFile{
 				name: fmt.Sprintf("tclient_%s", arch),
 				path: "/opt/bin/tclient",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", project, version, "tclient", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "tclient", arch),
 			},
 			nodeFile{
 				name: "mon_ca.pem",
@@ -282,19 +316,19 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 			},
 		)
 		// TODO: versioning for secretservice URLs
-	} else if project == "bitcoin" {
+	} else if p.name == "bitcoin" {
 		return nil, nil
-	} else if project == "decenter.world" {
+	} else if p.name == "decenter.world" {
 		return mustLoadFiles(
 			nodeFile{
 				name: fmt.Sprintf("decenter_world_%s", arch),
 				path: "/opt/bin/decenter_world",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", project, version, "decenter_world", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "decenter_world", arch),
 			},
 			nodeFile{
 				name: fmt.Sprintf("decenter_redirector_%s", arch),
 				path: "/opt/bin/decenter_redirector",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", project, version, "decenter_redirector", arch),
+				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", p.name, p.version, "decenter_redirector", arch),
 			},
 			nodeFile{
 				name: "client.pem",
@@ -310,11 +344,11 @@ func getBinaries(project, version, arch, sshash string) ([]binary, error) {
 			},
 		)
 	}
-	return nil, fmt.Errorf("bug: unknown release %q", project)
+	return nil, fmt.Errorf("bug: unknown project %q", p.name)
 }
 
-// getUnits returns the systemd units for specified project.
-func getUnits(project string) ([]systemdUnit, error) {
+// getUnits returns the systemd units for the project.
+func (p project) getUnits() ([]systemdUnit, error) {
 	mustLoadUnits := func (unitFiles ...string) ([]systemdUnit, error) {
 		units := []systemdUnit{}
 		for _, unitFile := range unitFiles {
@@ -339,28 +373,27 @@ func getUnits(project string) ([]systemdUnit, error) {
 		}
 		return append(units, *dropin), nil
 	}
-	if project == "hkjninfra" {
+	if p.name == "hkjninfra" {
 		return mustLoadUnits("tclient.service", "tclient.timer")
-	} else if project == "bitcoin" {
+	} else if p.name == "bitcoin" {
 		units, err := mustLoadUnits(
 			"bitcoin.service",
 			"containers.mount",
 		)
-
 		return alsoMustLoadDropin(
 			units,
 			err,
 			"docker.service",
 			"10_override_storage.conf",
 		)
-	} else if project == "decenter.world" {
+	} else if p.name == "decenter.world" {
 		return mustLoadUnits(
 			"decenter.service",
 			"decenter_redirector.service",
 			"etc-secrets.mount",
 		)
 	} else {
-		return nil, fmt.Errorf("unknown project: %q", project)
+		return nil, fmt.Errorf("unknown project: %q", p.name)
 	}
 }
 
@@ -381,29 +414,49 @@ func getSecretServiceHash() (string, error) {
 }
 
 func main() {
-	nc := nodeConfig{
-		"core": map[string]string{
-			"hkjninfra": "1.5.0",
-			"bitcoin": "0.0.15",
+	nc := nodeConfigs{
+		"core": nodeConfig{
+			name: "core",
+			arch: "x86_64",
+			projects: []project{
+				{
+					name: "hkjninfra",
+					version: "1.5.0",
+				}, {
+					name: "bitcoin",
+					version: "0.0.15",
+				},
+			},
 		},
-		"decenter_world": map[string]string{
-			"hkjninfra": "1.5.0",
-			"decenter.world": "1.1.7",
+		"decenter_world": nodeConfig{
+			name: "decenter_world",
+			arch: "x86_64",
+			projects: []project{
+				{
+					name: "hkjninfra",
+					version: "1.5.0",
+				}, {
+					name: "decenter.world",
+					version: "1.1.7",
+				},
+			},
 		},
 	}
+
 	sshash, err := getSecretServiceHash()
 	if err != nil {
 		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
 	}
-	log.Printf("Read %d character secret service hash: %q\n", len(sshash), sshash)
+	log.Printf("Read %d character secret service hash.\n", len(sshash))
 
 	ns, err := nc.getNodes(sshash)
 	if err != nil {
 		log.Fatalf("Unable to get node versions: %v\n", err)
 	}
-	log.Printf("Parsed configs for %d nodes..\n", len(ns))
+	log.Printf("Parsed configs for %d nodes.\n", len(ns))
 
 	for _, n := range ns {
+		log.Printf("Writing Ignition config for %v..\n", n)
 		err := n.write(newConfig())
 		if err != nil {
 			log.Fatalf("Failed to write node config: %v\n", err)
