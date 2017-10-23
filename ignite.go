@@ -7,7 +7,6 @@ import (
 	"crypto/sha512"
 	"fmt"
 	"encoding/json"
-	"io"
 	"io/ioutil"
 	"log"
 	"strings"
@@ -60,7 +59,7 @@ type (
 		Version string `json:"version"`
 		Config map[string]string `json:"config"`
 	}
-	config struct{
+	ignitionConfig struct{
 		Ignition ignition `json:"ignition"`
 		Storage storage `json:"storage"`
 		Systemd systemd `json:"systemd"`
@@ -109,7 +108,9 @@ type (
 	}
 	projectConfigs map[projectName]projectConfig
 	projectConfig struct{
+		// units are the names of the systemd units for the project
 		units []string
+		// dropins are the names of the systemd units and overrides for the project
 		dropins []dropinName
 	}
 	// nodeConfigs is the configuration of all nodes
@@ -144,16 +145,16 @@ func newSystemdUnit(unitFile string) (*systemdUnit, error) {
 	}, nil
 }
 
-func newSystemdDropin(unitFile, dropinFile string) (*systemdUnit, error) {
-	b, err := ioutil.ReadFile(fmt.Sprintf("units/%s", dropinFile))
+func (dn dropinName) load() (*systemdUnit, error) {
+	b, err := ioutil.ReadFile(fmt.Sprintf("units/%s", dn.dropin))
 	if err != nil {
 		return nil, err
 	}
 	return &systemdUnit{
-		Name: unitFile,
+		Name: dn.unit,
 		Dropins: []systemdDropin{
 			{
-				Name: dropinFile,
+				Name: dn.dropin,
 				Contents: string(b),
 			},
 		},
@@ -180,20 +181,22 @@ func (n node) String() string {
 	return fmt.Sprintf("%q (%d binaries, %d systemd units)", n.name, len(n.binaries), len(n.systemdUnits))
 }
 
-func (n node) write(bc config) error {
+// write writes the Ignition config to disk.
+func (n node) write() error {
 	f, err := os.Create(fmt.Sprintf("bootstrap/%s.json", n.name))
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	bc.Storage.Files = append(bc.Storage.Files, n.getFiles()...)
-	bc.Systemd.Units = append(bc.Systemd.Units, n.getSystemdUnits()...)
-	bc.serialize(f)
-	return nil
+
+	conf := newIgnitionConfig()
+	conf.Storage.Files = append(conf.Storage.Files, n.getFiles()...)
+	conf.Systemd.Units = append(conf.Systemd.Units, n.getSystemdUnits()...)
+	return json.NewEncoder(f).Encode(&conf)
 }
 
-func newConfig() config {
-	return config{
+func newIgnitionConfig() ignitionConfig {
+	return ignitionConfig{
 		Ignition: ignition{
 			Version: "2.0.0",
 			Config: map[string]string{},
@@ -220,10 +223,6 @@ func newConfig() config {
 			Networkd: map[string]string{},
 		},
 	}
-}
-
-func (c config) serialize(w io.Writer) error {
-	return json.NewEncoder(w).Encode(&c)
 }
 
 // getBinaries returns the binaries for project.
@@ -329,7 +328,7 @@ func (p project) getUnits(conf projectConfig) ([]systemdUnit, error) {
 		units = append(units, *unit)
 	}
 	for _, d := range conf.dropins {
-		dropin, err := newSystemdDropin(d.unit, d.dropin)
+		dropin, err := d.load()
 		if err != nil {
 			return nil, err
 		}
@@ -338,6 +337,7 @@ func (p project) getUnits(conf projectConfig) ([]systemdUnit, error) {
 	return units, nil
 }
 
+// getSecretServiceHash returns the secret service hash read from files.
 func getSecretServiceHash() (string, error) {
 	salt, err := ioutil.ReadFile(saltFile)
 	if err != nil {
@@ -466,7 +466,7 @@ func main() {
 
 	for _, n := range ns {
 		log.Printf("Writing Ignition config for %v..\n", n)
-		err := n.write(newConfig())
+		err := n.write()
 		if err != nil {
 			log.Fatalf("Failed to write node config: %v\n", err)
 		}

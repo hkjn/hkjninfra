@@ -28,7 +28,7 @@ run_tf() {
 		sshash=$(echo $(cat /etc/secrets/secretservice/seed)'|'$(cat /etc/secrets/secretservice/salt) | sha512sum | cut -d ' ' -f1)
 		SECRETSERVICE_HASH=${sshash} generate_ignite_configs
 		if [[ $? -ne 0 ]]; then
-			echo "ignite.py failed, bailing." >&2
+			echo "FATAL: ignite.go failed." >&2
 			return
 		fi
 	fi
