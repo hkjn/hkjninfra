@@ -101,7 +101,11 @@ type (
 		// binaries are the binaries needed for the project
 		binaries []binary
 	}
-	projectConfig map[projectName][]systemdUnit
+	projectConfig struct {
+		units []systemdUnit
+		files []nodeFile
+	}
+	projectConfigs map[projectName]projectConfig
 	// projects is a list of projects that a node should run
 	projects []project
 	// nodeConfig is the configuration of a single node
@@ -116,12 +120,19 @@ type (
 	dropinName struct{
 		unit, dropin string
 	}
-	// projectFiles represents the systemd files to include for a project.
+	nodeFile struct {
+		name, checksumKey, path string
+		getUrl func(version) string
+	}
+	// projectFiles represents the files to include for a project.
 	projectFiles struct{
 		// units are the names of the systemd units for the project
 		unitNames []string
 		// dropins are the names of the systemd units and overrides for the project
 		dropinNames []dropinName
+
+		// files are the non-systemd files for the project
+		files []nodeFile
 	}
 	// nodeConfigs is the configuration of all nodes
 	nodeConfigs map[nodeName]nodeConfig
@@ -235,8 +246,10 @@ func newIgnitionConfig() ignitionConfig {
 	}
 }
 
-// getBinaries returns the binaries for project.
-func getBinaries(name projectName, v version, arch, sshash string) ([]binary, error) {
+// TODO: versioning for secretservice URLs
+
+// loadFiles returns the non-systemd files for the project.
+func loadFiles(name projectName, v version, arch, sshash string, files []nodeFile) ([]binary, error) {
 	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", name, v)
 	checksum_data, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
@@ -253,78 +266,23 @@ func getBinaries(name projectName, v version, arch, sshash string) ([]binary, er
 		}
 		checksums[parts[1]] = parts[0]
 	}
-
-	type nodeFile struct {
-		name, checksumKey, path, url string
-	}
-	mustLoadFiles := func(nodeFiles ...nodeFile) ([]binary, error) {
-		binaries := []binary{}
-		for _, file := range nodeFiles {
-			key := file.checksumKey
-			if key == "" {
-				key = file.name
-			}
-			checksum, exists := checksums[key]
-			if !exists {
-				return nil, fmt.Errorf("missing checksum %q in %s", key, checksumFile)
-			}
-			binaries = append(binaries, binary{
-				url: file.url,
-				checksum: checksum,
-				path: file.path,
-			})
+	binaries := make([]binary, len(files), len(files))
+	for i, file := range files {
+		key := file.checksumKey
+		if key == "" {
+			key = file.name
 		}
-		return binaries, nil
+		checksum, exists := checksums[key]
+		if !exists {
+			return nil, fmt.Errorf("missing checksum %q in %s", key, checksumFile)
+		}
+		binaries[i] = binary{
+			url: file.getUrl(v),
+			checksum: checksum,
+			path: file.path,
+		}
 	}
-
-	if name == "hkjninfra" {
-		return mustLoadFiles(
-			nodeFile{
-				name: "gather_facts",
-				path: "/opt/bin/gather_facts",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", name, v, "gather_facts"),
-			},
-			nodeFile{
-				name: fmt.Sprintf("tclient_%s", arch),
-				path: "/opt/bin/tclient",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "tclient", arch),
-			},
-			nodeFile{
-				name: "mon_ca.pem",
-				path: "/etc/ssl/mon_ca.pem",
-				url: fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "mon_ca.pem"),
-			},
-		)
-		// TODO: versioning for secretservice URLs
-	} else if name == "bitcoin" {
-		return nil, nil
-	} else if name == "decenter.world" {
-		return mustLoadFiles(
-			nodeFile{
-				name: fmt.Sprintf("decenter_world_%s", arch),
-				path: "/opt/bin/decenter_world",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "decenter_world", arch),
-			},
-			nodeFile{
-				name: fmt.Sprintf("decenter_redirector_%s", arch),
-				path: "/opt/bin/decenter_redirector",
-				url: fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", name, v, "decenter_redirector", arch),
-			},
-			nodeFile{
-				name: "client.pem",
-				checksumKey: "decenter.world.pem",
-				path: "/etc/ssl/client.pem",
-				url: fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem"),
-			},
-			nodeFile{
-				name: "client-key.pem",
-				checksumKey: "decenter.world-key.pem",
-				path: "/etc/ssl/client-key.pem",
-				url: fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world-key.pem"),
-			},
-		)
-	}
-	return nil, fmt.Errorf("bug: unknown project %q", name)
+	return binaries, nil
 }
 
 // loadUnits returns the systemd units for the project.
@@ -395,32 +353,35 @@ func (nc nodeConfigs) createNodes() nodes {
 }
 
 // getProjectConfigs returns the project configs, given files to load.
-func getProjectConfigs(pf map[projectName]projectFiles) projectConfig {
-	conf := map[projectName][]systemdUnit{}
-	for name, files := range pf {
-		units, err := files.loadUnits()
+func getProjectConfigs(pfs map[projectName]projectFiles) (*projectConfigs, error) {
+	conf := projectConfigs{}
+	for name, pfs := range pfs {
+		units, err := pfs.loadUnits()
 		if err != nil {
-			log.Fatalf("Failed to load systemd units: %v\n", err)
+			return nil, err
 		}
-		conf[name] = units
+		conf[name] = projectConfig{
+			units: units,
+			files: pfs.files,
+		}
 	}
-	return conf
+	return &conf, nil
 }
 
 // newNodeConfigs returns the complete node configs, with systemd units and binaries included.
-func newNodeConfigs(pc projectConfig, sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
+func newNodeConfigs(pcs projectConfigs, sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
 	result := nodeConfigs{}
 	for _, nc := range baseConf{
 		nc := nc
 		projects := make([]project, len(nc.projects), len(nc.projects))
 		for i, p := range nc.projects {
 			p := p
-			units, exists := pc[p.name]
+			pc, exists := pcs[p.name]
 			if !exists {
 				return nil, fmt.Errorf("bug: missing projectConfig for %q", nc.name)
 			}
-			p.units = units
-			bins, err := getBinaries(p.name, p.version, nc.arch, sshash)
+			p.units = pc.units
+			bins, err := loadFiles(p.name, p.version, nc.arch, sshash, pc.files)
 			if err != nil {
 				return nil, err
 			}
@@ -440,12 +401,33 @@ func main() {
 		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
 	}
 	log.Printf("Read %d character secret service hash.\n", len(sshash))
-
-	pc := getProjectConfigs(map[projectName]projectFiles{
+	arch := "x86_64" // TODO
+	pc, err := getProjectConfigs(map[projectName]projectFiles{
 		"hkjninfra": {
 			unitNames: []string{
 				"tclient.service",
 				"tclient.timer",
+			},
+			files: []nodeFile{
+				{
+					name: "gather_facts",
+					path: "/opt/bin/gather_facts",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", "hkjninfra", v, "gather_facts")
+					},
+				}, {
+					name: fmt.Sprintf("tclient_%s", arch),
+					path: "/opt/bin/tclient",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", "hkjninfra", v, "tclient", arch)
+					},
+				}, {
+					name: "mon_ca.pem",
+					path: "/etc/ssl/mon_ca.pem",
+					getUrl: func (v version) string {
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "mon_ca.pem")
+					},
+				},
 			},
 		},
 		"bitcoin": {
@@ -466,9 +448,42 @@ func main() {
 				"decenter_redirector.service",
 				"etc-secrets.mount",
 			},
+			files: []nodeFile{
+				{
+					name: fmt.Sprintf("decenter_world_%s", arch),
+					path: "/opt/bin/decenter_world",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", "decenter.world", v, "decenter_world", arch)
+					},
+				}, {
+					name: fmt.Sprintf("decenter_redirector_%s", arch),
+					path: "/opt/bin/decenter_redirector",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", "decenter.world", v, "decenter_redirector", arch)
+					},
+				}, {
+					name: "client.pem",
+					checksumKey: "decenter.world.pem",
+					path: "/etc/ssl/client.pem",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem")
+					},
+				}, {
+					name: "client-key.pem",
+					checksumKey: "decenter.world-key.pem",
+					path: "/etc/ssl/client-key.pem",
+					getUrl: func(v version) string {
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world-key.pem")
+					},
+				},
+			},
 		},
 	})
-	nc, err := newNodeConfigs(pc, sshash, []nodeConfig{
+	if err != nil {
+		log.Fatalf("Failed to create project configs: %v\n", err)
+	}
+
+	nc, err := newNodeConfigs(*pc, sshash, []nodeConfig{
 		{
 			name: "core",
 			arch: "x86_64",
