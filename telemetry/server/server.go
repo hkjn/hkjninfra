@@ -11,8 +11,8 @@ import (
 	"log"
 	"net"
 	"net/http"
-	"strings"
 	"os"
+	"strings"
 	"time"
 
 	googletime "github.com/golang/protobuf/ptypes/timestamp"
@@ -27,13 +27,12 @@ import (
 const defaultAddr = ":50051"
 
 var (
-	debugging   = os.Getenv("REPORT_DEBUGGING") == "true"
-	slackToken  = os.Getenv("REPORT_SLACK_TOKEN")
-	tlsCertFile = os.Getenv("REPORT_TLS_CERT")
-	tlsKeyFile  = os.Getenv("REPORT_TLS_KEY")
-	tlsCaCertFile   = os.Getenv("REPORT_TLS_CA_CERT")
+	debugging     = os.Getenv("REPORT_DEBUGGING") == "true"
+	slackToken    = os.Getenv("REPORT_SLACK_TOKEN")
+	tlsCertFile   = os.Getenv("REPORT_TLS_CERT")
+	tlsKeyFile    = os.Getenv("REPORT_TLS_KEY")
+	tlsCaCertFile = os.Getenv("REPORT_TLS_CA_CERT")
 )
-
 
 type (
 	// clientInfo represents info about a client that has
@@ -143,7 +142,7 @@ func (s *reportServer) Info(ctx context.Context, req *pb.InfoRequest) (*pb.InfoR
 	return &pb.InfoResponse{
 		Info: map[string]*pb.ClientInfo{
 			"notimplementedyet": &pb.ClientInfo{
-				CpuArch: "gelatinous",
+				CpuArch:  "gelatinous",
 				Hostname: "notimplementedyet-inforesponse",
 			},
 		},

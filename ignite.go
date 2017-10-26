@@ -6,13 +6,14 @@ package main
 
 import (
 	"crypto/sha512"
-	"fmt"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"strings"
 	"os"
+	"strings"
 )
+
 const (
 	// saltFile is the path to the secretservice salt file.
 	saltFile = "/etc/secrets/secretservice/salt"
@@ -21,51 +22,51 @@ const (
 )
 
 type (
-	fileVerification struct{
+	fileVerification struct {
 		Hash string `json:"hash,omitempty"`
 	}
-	fileContents struct{
-		Source string `json:"source"`
+	fileContents struct {
+		Source       string           `json:"source"`
 		Verification fileVerification `json:"verification"`
 	}
-	file struct{
-		Filesystem string `json:"filesystem"`
-		Path string `json:"path"`
-		Contents fileContents `json:"contents"`
-		Mode int `json:"mode"`
-		User map[string]string `json:"user"`
-		Group map[string]string `json:"group"`
+	file struct {
+		Filesystem string            `json:"filesystem"`
+		Path       string            `json:"path"`
+		Contents   fileContents      `json:"contents"`
+		Mode       int               `json:"mode"`
+		User       map[string]string `json:"user"`
+		Group      map[string]string `json:"group"`
 	}
-	storage struct{
+	storage struct {
 		Filesystem []string `json:"filesystem"`
-		Files []file `json:"files"`
+		Files      []file   `json:"files"`
 	}
-	systemdDropin struct{
-		Name string `json:"name"`
+	systemdDropin struct {
+		Name     string `json:"name"`
 		Contents string `json:"contents"`
 	}
-	systemdUnit struct{
-		Enable bool `json:"enable"`
-		Name string `json:"name"`
-		Contents string `json:"contents,omitempty"`
-		Dropins []systemdDropin `json:"dropins,omitempty"`
+	systemdUnit struct {
+		Enable   bool            `json:"enable"`
+		Name     string          `json:"name"`
+		Contents string          `json:"contents,omitempty"`
+		Dropins  []systemdDropin `json:"dropins,omitempty"`
 	}
-	systemd struct{
-		Units []systemdUnit `json:"units"`
-		Passwd map[string]string `json:"passwd"`
+	systemd struct {
+		Units    []systemdUnit     `json:"units"`
+		Passwd   map[string]string `json:"passwd"`
 		Networkd map[string]string `json:"networkd"`
 	}
-	ignition struct{
-		Version string `json:"version"`
-		Config map[string]string `json:"config"`
+	ignition struct {
+		Version string            `json:"version"`
+		Config  map[string]string `json:"config"`
 	}
-	ignitionConfig struct{
+	ignitionConfig struct {
 		Ignition ignition `json:"ignition"`
-		Storage storage `json:"storage"`
-		Systemd systemd `json:"systemd"`
+		Storage  storage  `json:"storage"`
+		Systemd  systemd  `json:"systemd"`
 	}
 	// binary to fetch on a node
-	binary struct{
+	binary struct {
 		// url to fetch binary from, e.g. "https://github.com/hkjn/hkjninfra/releases/download/1.1.7/tserver_x86_64"
 		url string
 		// checksum of the file, e.g. "sha512-123cec939d7c03c239ee6040185ccb8b74d5d875764479444448ca2ea31d25f364a891363a5850fba2564ce238c7548b3677d713ce69ed7caf421950cd3cd5c6"
@@ -73,12 +74,12 @@ type (
 		// path on the remote node for the binary, e.g. "/opt/bin/tserver"
 		path string
 	}
-	version string
+	version  string
 	binaries map[version][]binary
 	// nodeName is the name of a node, e.g. "core"
 	nodeName string
 	// node is a single instance
-	node struct{
+	node struct {
 		// name is the name of the node
 		name nodeName
 		// binaries are the files to install on the node
@@ -87,7 +88,7 @@ type (
 		systemdUnits []systemdUnit
 	}
 
-	nodes map[nodeName]node
+	nodes       map[nodeName]node
 	projectName string
 	// project is something that a node should run
 	project struct {
@@ -108,7 +109,7 @@ type (
 	// projects is a list of projects that a node should run
 	projects []project
 	// nodeConfig is the configuration of a single node
-	nodeConfig struct{
+	nodeConfig struct {
 		// name is the name of the node
 		name nodeName
 		// sshash is the secretservice hash to use
@@ -118,15 +119,15 @@ type (
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
 		arch string
 	}
-	dropinName struct{
+	dropinName struct {
 		unit, dropin string
 	}
 	nodeFile struct {
 		name, checksumKey, path string
-		getUrl func(version) string
+		getUrl                  func(version) string
 	}
 	// projectFiles represents the files to include for a project.
-	projectFiles struct{
+	projectFiles struct {
 		// units are the names of the systemd units for the project
 		unitNames []string
 		// dropins are the names of the systemd units and overrides for the project
@@ -142,15 +143,15 @@ type (
 func (b binary) toFile() file {
 	return file{
 		Filesystem: "root",
-		Path: b.path,
+		Path:       b.path,
 		Contents: fileContents{
 			Source: b.url,
 			Verification: fileVerification{
 				Hash: fmt.Sprintf("sha512-%s", b.checksum),
 			},
 		},
-		Mode: 493,
-		User: map[string]string{},
+		Mode:  493,
+		User:  map[string]string{},
 		Group: map[string]string{},
 	}
 }
@@ -161,8 +162,8 @@ func newSystemdUnit(unitFile string) (*systemdUnit, error) {
 		return nil, err
 	}
 	return &systemdUnit{
-		Enable: true,
-		Name: unitFile,
+		Enable:   true,
+		Name:     unitFile,
 		Contents: string(b),
 	}, nil
 }
@@ -176,7 +177,7 @@ func (dn dropinName) load() (*systemdUnit, error) {
 		Name: dn.unit,
 		Dropins: []systemdDropin{
 			{
-				Name: dn.dropin,
+				Name:     dn.dropin,
 				Contents: string(b),
 			},
 		},
@@ -221,27 +222,27 @@ func newIgnitionConfig() ignitionConfig {
 	return ignitionConfig{
 		Ignition: ignition{
 			Version: "2.0.0",
-			Config: map[string]string{},
+			Config:  map[string]string{},
 		},
 		Storage: storage{
 			Filesystem: []string{},
 			Files: []file{
 				file{
 					Filesystem: "root",
-					Path: "/etc/coreos/update.conf",
+					Path:       "/etc/coreos/update.conf",
 					Contents: fileContents{
-						Source: "data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22",
+						Source:       "data:,GROUP%3Dbeta%0AREBOOT_STRATEGY%3D%22etcd-lock%22",
 						Verification: fileVerification{},
 					},
-					Mode: 420,
-					User: map[string]string{},
+					Mode:  420,
+					User:  map[string]string{},
 					Group: map[string]string{},
 				},
 			},
 		},
 		Systemd: systemd{
-			Units: []systemdUnit{},
-			Passwd: map[string]string{},
+			Units:    []systemdUnit{},
+			Passwd:   map[string]string{},
 			Networkd: map[string]string{},
 		},
 	}
@@ -276,9 +277,9 @@ func (p *project) loadFiles(arch, sshash string, files []nodeFile) error {
 			return fmt.Errorf("missing checksum %q in %s", key, checksumFile)
 		}
 		binaries[i] = binary{
-			url: file.getUrl(p.version),
+			url:      file.getUrl(p.version),
 			checksum: checksum,
-			path: file.path,
+			path:     file.path,
 		}
 	}
 	p.binaries = binaries
@@ -344,8 +345,8 @@ func (nc nodeConfigs) createNodes() nodes {
 	for name, conf := range nc {
 		log.Printf("Generating config for node %q..\n", name)
 		result[name] = node{
-			name: name,
-			binaries: conf.projects.getBinaries(),
+			name:         name,
+			binaries:     conf.projects.getBinaries(),
 			systemdUnits: conf.projects.getUnits(),
 		}
 	}
@@ -433,7 +434,7 @@ func main() {
 				}, {
 					name: "mon_ca.pem",
 					path: "/etc/ssl/mon_ca.pem",
-					getUrl: func (v version) string {
+					getUrl: func(v version) string {
 						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "mon_ca.pem")
 					},
 				},
@@ -446,7 +447,7 @@ func main() {
 			},
 			dropinNames: []dropinName{
 				{
-					unit: "docker.service",
+					unit:   "docker.service",
 					dropin: "10_override_storage.conf",
 				},
 			},
@@ -471,17 +472,17 @@ func main() {
 						return fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s_%s", "decenter.world", v, "decenter_redirector", arch)
 					},
 				}, {
-					name: "client.pem",
+					name:        "client.pem",
 					checksumKey: "decenter.world.pem",
-					path: "/etc/ssl/client.pem",
+					path:        "/etc/ssl/client.pem",
 					// TODO: versioning for secretservice URLs
 					getUrl: func(v version) string {
 						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem")
 					},
 				}, {
-					name: "client-key.pem",
+					name:        "client-key.pem",
 					checksumKey: "decenter.world-key.pem",
-					path: "/etc/ssl/client-key.pem",
+					path:        "/etc/ssl/client-key.pem",
 					getUrl: func(v version) string {
 						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world-key.pem")
 					},
@@ -495,29 +496,29 @@ func main() {
 
 	nc := nodeConfigs{
 		"core": nodeConfig{
-			name: "core",
+			name:   "core",
 			sshash: sshash,
-			arch: "x86_64",
+			arch:   "x86_64",
 			projects: []project{
 				{
-					name: "hkjninfra",
+					name:    "hkjninfra",
 					version: "1.5.0",
 				}, {
-					name: "bitcoin",
+					name:    "bitcoin",
 					version: "0.0.15",
 				},
 			},
 		},
 		"decenter_world": nodeConfig{
-			name: "decenter_world",
+			name:   "decenter_world",
 			sshash: sshash,
-			arch: "x86_64",
+			arch:   "x86_64",
 			projects: []project{
 				{
-					name: "hkjninfra",
+					name:    "hkjninfra",
 					version: "1.5.0",
 				}, {
-					name: "decenter.world",
+					name:    "decenter.world",
 					version: "1.1.7",
 				},
 			},

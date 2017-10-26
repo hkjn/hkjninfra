@@ -26,11 +26,11 @@ const (
 )
 
 var (
-	debugging   = os.Getenv("REPORT_DEBUGGING") == "true"
-	addr        = getAddr(defaultAddr)
-	tlsCertFile = os.Getenv("REPORT_TLS_CERT")
-	tlsKeyFile  = os.Getenv("REPORT_TLS_KEY")
-	tlsCaCertFile   = os.Getenv("REPORT_TLS_CA_CERT")
+	debugging     = os.Getenv("REPORT_DEBUGGING") == "true"
+	addr          = getAddr(defaultAddr)
+	tlsCertFile   = os.Getenv("REPORT_TLS_CERT")
+	tlsKeyFile    = os.Getenv("REPORT_TLS_KEY")
+	tlsCaCertFile = os.Getenv("REPORT_TLS_CA_CERT")
 )
 
 func debug(format string, a ...interface{}) {
