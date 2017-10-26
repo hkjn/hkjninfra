@@ -246,23 +246,21 @@ func newIgnitionConfig() ignitionConfig {
 	}
 }
 
-// TODO: versioning for secretservice URLs
-
 // loadFiles returns the non-systemd files for the project.
-func loadFiles(name projectName, v version, arch, sshash string, files []nodeFile) ([]binary, error) {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", name, v)
-	checksum_data, err := ioutil.ReadFile(checksumFile)
+func (p *project) loadFiles(arch, sshash string, files []nodeFile) error {
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.name, p.version)
+	checksumData, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", name, v, err)
+		return fmt.Errorf("unable to read checksums for %q version %q: %v", p.name, p.version, err)
 	}
 	checksums := map[string]string{}
-	for _, line := range strings.Split(string(checksum_data), "\n") {
+	for _, line := range strings.Split(string(checksumData), "\n") {
 		if len(line) == 0 {
 			continue
 		}
 		parts := strings.Fields(line)
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid line in checksum file %s: %q", checksumFile, line)
+			return fmt.Errorf("invalid line in checksum file %s: %q", checksumFile, line)
 		}
 		checksums[parts[1]] = parts[0]
 	}
@@ -274,15 +272,16 @@ func loadFiles(name projectName, v version, arch, sshash string, files []nodeFil
 		}
 		checksum, exists := checksums[key]
 		if !exists {
-			return nil, fmt.Errorf("missing checksum %q in %s", key, checksumFile)
+			return fmt.Errorf("missing checksum %q in %s", key, checksumFile)
 		}
 		binaries[i] = binary{
-			url: file.getUrl(v),
+			url: file.getUrl(p.version),
 			checksum: checksum,
 			path: file.path,
 		}
 	}
-	return binaries, nil
+	p.binaries = binaries
+	return nil
 }
 
 // loadUnits returns the systemd units for the project.
@@ -368,27 +367,38 @@ func getProjectConfigs(pfs map[projectName]projectFiles) (*projectConfigs, error
 	return &conf, nil
 }
 
-// newNodeConfigs returns the complete node configs, with systemd units and binaries included.
-func newNodeConfigs(pcs projectConfigs, sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
+// load loads the project'S systemd units and binaries.
+func (p *project) load(sshash, arch string, conf projectConfig) error {
+	p.units = conf.units
+	return p.loadFiles(arch, sshash, conf.files)
+}
+
+// loadProjects loads the systemd units and binaries for the node config.
+func (nc *nodeConfig) loadProjects(sshash string, projectConf projectConfigs) error {
+	projects := make([]project, len(nc.projects), len(nc.projects))
+	for i, p := range nc.projects {
+		p := p
+		pc, exists := projectConf[p.name]
+		if !exists {
+			return fmt.Errorf("bug: missing projectConfig for %q", nc.name)
+		}
+		if err := p.load(sshash, nc.arch, pc); err != nil {
+			return err
+		}
+		projects[i] = p
+	}
+	nc.projects = projects
+	return nil
+}
+
+// createNodeConfigs returns the complete node configs, with systemd units and binaries included.
+func (projectConf projectConfigs) createNodeConfigs(sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
 	result := nodeConfigs{}
 	for _, nc := range baseConf{
-		nc := nc
-		projects := make([]project, len(nc.projects), len(nc.projects))
-		for i, p := range nc.projects {
-			p := p
-			pc, exists := pcs[p.name]
-			if !exists {
-				return nil, fmt.Errorf("bug: missing projectConfig for %q", nc.name)
-			}
-			p.units = pc.units
-			bins, err := loadFiles(p.name, p.version, nc.arch, sshash, pc.files)
-			if err != nil {
-				return nil, err
-			}
-			p.binaries = bins
-			projects[i] = p
+		err := nc.loadProjects(sshash, projectConf)
+		if err != nil {
+			return nil, err
 		}
-		nc.projects = projects
 		result[nc.name] = nc
 	}
 	return result, nil
@@ -465,6 +475,7 @@ func main() {
 					name: "client.pem",
 					checksumKey: "decenter.world.pem",
 					path: "/etc/ssl/client.pem",
+					// TODO: versioning for secretservice URLs
 					getUrl: func(v version) string {
 						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem")
 					},
@@ -483,7 +494,7 @@ func main() {
 		log.Fatalf("Failed to create project configs: %v\n", err)
 	}
 
-	nc, err := newNodeConfigs(*pc, sshash, []nodeConfig{
+	nc, err := pc.createNodeConfigs(sshash, []nodeConfig{
 		{
 			name: "core",
 			arch: "x86_64",
