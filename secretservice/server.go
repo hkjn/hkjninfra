@@ -18,10 +18,12 @@ import (
 type Config struct {
 	Seed     string
 	FilesDir string
-	Addr   string
+	Addr     string
 }
 
-const tpl = `
+const (
+	salt = "planetary location or range, biology, and behaviors"
+	tpl  = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -36,6 +38,7 @@ const tpl = `
 </ul>
 </body>
 </html>`
+)
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	parts := strings.Split(r.RequestURI, "/")
@@ -65,7 +68,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 // lookup returns the unique prefix to use for given key.
 func lookup(key string) string {
-	salt := "planetary location or range, biology, and behaviors"
 	val := fmt.Sprintf("%s|%s\n", key, salt)
 	digest := sha512.Sum512([]byte(val))
 	return fmt.Sprintf("%x", digest)
