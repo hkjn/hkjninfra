@@ -13,7 +13,6 @@ import (
 	"strings"
 	"os"
 )
-
 const (
 	// saltFile is the path to the secretservice salt file.
 	saltFile = "/etc/secrets/secretservice/salt"
@@ -112,6 +111,8 @@ type (
 	nodeConfig struct{
 		// name is the name of the node
 		name nodeName
+		// sshash is the secretservice hash to use
+		sshash string
 		// projects is all the projects the node should run
 		projects projects
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
@@ -374,7 +375,7 @@ func (p *project) load(sshash, arch string, conf projectConfig) error {
 }
 
 // loadProjects loads the systemd units and binaries for the node config.
-func (nc *nodeConfig) loadProjects(sshash string, projectConf projectConfigs) error {
+func (nc *nodeConfig) loadProjects(projectConf projectConfigs) error {
 	projects := make([]project, len(nc.projects), len(nc.projects))
 	for i, p := range nc.projects {
 		p := p
@@ -382,7 +383,7 @@ func (nc *nodeConfig) loadProjects(sshash string, projectConf projectConfigs) er
 		if !exists {
 			return fmt.Errorf("bug: missing projectConfig for %q", nc.name)
 		}
-		if err := p.load(sshash, nc.arch, pc); err != nil {
+		if err := p.load(nc.sshash, nc.arch, pc); err != nil {
 			return err
 		}
 		projects[i] = p
@@ -391,19 +392,17 @@ func (nc *nodeConfig) loadProjects(sshash string, projectConf projectConfigs) er
 	return nil
 }
 
-// createNodeConfigs returns the complete node configs, with systemd units and binaries included.
-func (projectConf projectConfigs) createNodeConfigs(sshash string, baseConf []nodeConfig) (nodeConfigs, error) {
-	result := nodeConfigs{}
-	for _, nc := range baseConf{
-		err := nc.loadProjects(sshash, projectConf)
-		if err != nil {
-			return nil, err
+// load loads the systemd units and binaries for each project in the node configs.
+func (nc nodeConfigs) load(pc projectConfigs) error {
+	for _, conf := range nc {
+		conf := conf
+		if err := conf.loadProjects(pc); err != nil {
+			return err
 		}
-		result[nc.name] = nc
+		nc[conf.name] = conf
 	}
-	return result, nil
+	return nil
 }
-
 
 func main() {
 	sshash, err := getSecretServiceHash()
@@ -494,9 +493,10 @@ func main() {
 		log.Fatalf("Failed to create project configs: %v\n", err)
 	}
 
-	nc, err := pc.createNodeConfigs(sshash, []nodeConfig{
-		{
+	nc := nodeConfigs{
+		"core": nodeConfig{
 			name: "core",
+			sshash: sshash,
 			arch: "x86_64",
 			projects: []project{
 				{
@@ -507,8 +507,10 @@ func main() {
 					version: "0.0.15",
 				},
 			},
-		}, {
+		},
+		"decenter_world": nodeConfig{
 			name: "decenter_world",
+			sshash: sshash,
 			arch: "x86_64",
 			projects: []project{
 				{
@@ -520,8 +522,8 @@ func main() {
 				},
 			},
 		},
-	})
-	if err != nil {
+	}
+	if err := nc.load(*pc); err != nil {
 		log.Fatalf("Failed to create node configs: %v\n", err)
 	}
 
