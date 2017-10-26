@@ -1,10 +1,5 @@
 // secretservice is a fileserver serving up secrets over HTTPS.
 //
-// TODO(hkjn): Create web UI that serves on https://secrets.hkjn.me, takes
-// input strings and takes first N chars (10 should be sufficient) of
-// sha1sum(input + nonce) to form link like
-// https://fs.hkjn.me/value.
-//
 package main
 
 import (
