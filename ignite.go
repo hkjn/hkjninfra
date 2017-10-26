@@ -475,16 +475,15 @@ func main() {
 					name:        "client.pem",
 					checksumKey: "decenter.world.pem",
 					path:        "/etc/ssl/client.pem",
-					// TODO: versioning for secretservice URLs
 					getUrl: func(v version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "decenter.world.pem")
 					},
 				}, {
 					name:        "client-key.pem",
 					checksumKey: "decenter.world-key.pem",
 					path:        "/etc/ssl/client-key.pem",
 					getUrl: func(v version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "decenter.world-key.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "decenter.world-key.pem")
 					},
 				},
 			},
@@ -502,7 +501,7 @@ func main() {
 			projects: []project{
 				{
 					name:    "hkjninfra",
-					version: "1.5.0",
+					version: "1.5.1",
 				}, {
 					name:    "bitcoin",
 					version: "0.0.15",
@@ -516,10 +515,10 @@ func main() {
 			projects: []project{
 				{
 					name:    "hkjninfra",
-					version: "1.5.0",
+					version: "1.5.1",
 				}, {
 					name:    "decenter.world",
-					version: "1.1.7",
+					version: "1.1.8",
 				},
 			},
 		},
