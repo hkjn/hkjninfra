@@ -93,9 +93,9 @@ type (
 	// project is something that a node should run
 	project struct {
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
-		name projectName
+		Name projectName `json:"name"`
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
-		version version
+		Version version `json:"version"`
 		// units are the systemd units for the project
 		units []systemdUnit
 		// binaries are the binaries needed for the project
@@ -110,16 +110,16 @@ type (
 	projects []project
 	// nodeConfig is the configuration of a single node
 	nodeConfig struct {
-		// name is the name of the node
-		name nodeName
 		// sshash is the secretservice hash to use
 		sshash string
 		// projects is all the projects the node should run
-		projects projects
+		Projects projects `json:"projects"`
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
-		arch string
+		Arch string `json:"arch"`
 	}
-	dropinName struct {
+	// nodeConfigs is the configuration of all nodes
+	nodeConfigs map[nodeName]nodeConfig
+	dropinName  struct {
 		unit, dropin string
 	}
 	nodeFile struct {
@@ -136,8 +136,6 @@ type (
 		// files are the non-systemd files for the project
 		files []nodeFile
 	}
-	// nodeConfigs is the configuration of all nodes
-	nodeConfigs map[nodeName]nodeConfig
 )
 
 func (b binary) toFile() file {
@@ -250,10 +248,10 @@ func newIgnitionConfig() ignitionConfig {
 
 // loadFiles returns the non-systemd files for the project.
 func (p *project) loadFiles(arch, sshash string, files []nodeFile) error {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.name, p.version)
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.Name, p.Version)
 	checksumData, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return fmt.Errorf("unable to read checksums for %q version %q: %v", p.name, p.version, err)
+		return fmt.Errorf("unable to read checksums for %q version %q: %v", p.Name, p.Version, err)
 	}
 	checksums := map[string]string{}
 	for _, line := range strings.Split(string(checksumData), "\n") {
@@ -277,7 +275,7 @@ func (p *project) loadFiles(arch, sshash string, files []nodeFile) error {
 			return fmt.Errorf("missing checksum %q in %s", key, checksumFile)
 		}
 		binaries[i] = binary{
-			url:      file.getUrl(p.version),
+			url:      file.getUrl(p.Version),
 			checksum: checksum,
 			path:     file.path,
 		}
@@ -346,8 +344,8 @@ func (nc nodeConfigs) createNodes() nodes {
 		log.Printf("Generating config for node %q..\n", name)
 		result[name] = node{
 			name:         name,
-			binaries:     conf.projects.getBinaries(),
-			systemdUnits: conf.projects.getUnits(),
+			binaries:     conf.Projects.getBinaries(),
+			systemdUnits: conf.Projects.getUnits(),
 		}
 	}
 	return result
@@ -377,32 +375,43 @@ func (p *project) load(sshash, arch string, conf projectConfig) error {
 
 // loadProjects loads the systemd units and binaries for the node config.
 func (nc *nodeConfig) loadProjects(projectConf projectConfigs) error {
-	projects := make([]project, len(nc.projects), len(nc.projects))
-	for i, p := range nc.projects {
+	projects := make([]project, len(nc.Projects), len(nc.Projects))
+	for i, p := range nc.Projects {
 		p := p
-		pc, exists := projectConf[p.name]
+		pc, exists := projectConf[p.Name]
 		if !exists {
-			return fmt.Errorf("bug: missing projectConfig for %q", nc.name)
+			return fmt.Errorf("bug: missing projectConfig for project %q", p.Name)
 		}
-		if err := p.load(nc.sshash, nc.arch, pc); err != nil {
+		if err := p.load(nc.sshash, nc.Arch, pc); err != nil {
 			return err
 		}
 		projects[i] = p
 	}
-	nc.projects = projects
+	nc.Projects = projects
 	return nil
 }
 
 // load loads the systemd units and binaries for each project in the node configs.
 func (nc nodeConfigs) load(pc projectConfigs) error {
-	for _, conf := range nc {
+	for name, conf := range nc {
 		conf := conf
+		log.Printf("Loading projects for node %q..\n", name)
 		if err := conf.loadProjects(pc); err != nil {
 			return err
 		}
-		nc[conf.name] = conf
+		nc[name] = conf
 	}
 	return nil
+}
+
+func readNodeConfigs() (nodeConfigs, error) {
+	conf := nodeConfigs{}
+	f, err := os.Open("nodes.json")
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return conf, json.NewDecoder(f).Decode(&conf)
 }
 
 func main() {
@@ -493,35 +502,9 @@ func main() {
 		log.Fatalf("Failed to create project configs: %v\n", err)
 	}
 
-	nc := nodeConfigs{
-		"core": nodeConfig{
-			name:   "core",
-			sshash: sshash,
-			arch:   "x86_64",
-			projects: []project{
-				{
-					name:    "hkjninfra",
-					version: "1.5.1",
-				}, {
-					name:    "bitcoin",
-					version: "0.0.15",
-				},
-			},
-		},
-		"decenter_world": nodeConfig{
-			name:   "decenter_world",
-			sshash: sshash,
-			arch:   "x86_64",
-			projects: []project{
-				{
-					name:    "hkjninfra",
-					version: "1.5.1",
-				}, {
-					name:    "decenter.world",
-					version: "1.1.8",
-				},
-			},
-		},
+	nc, err := readNodeConfigs()
+	if err != nil {
+		log.Fatalf("Failed to read node configs: %v\n", err)
 	}
 	if err := nc.load(*pc); err != nil {
 		log.Fatalf("Failed to create node configs: %v\n", err)
