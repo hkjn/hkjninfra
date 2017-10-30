@@ -20,6 +20,8 @@ func checkClose(c io.Closer, err *error) {
 
 // fetch downloads the checksums from specified url.
 func fetch(url string, project ignite.ProjectName, version ignite.Version) (err error) {
+	// TODO: Also need to handle secrets, like decenter.world.pem for "decenter.world"..
+	// fetch from secret service directly?
 	if project == ignite.ProjectName("bitcoin") {
 		// TODO: Instead of special-casing "core" (bitcoin) project, which has
 		// no checksums since there's no binaries to download, maybe start
