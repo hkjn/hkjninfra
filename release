@@ -100,15 +100,21 @@ build_binaries
 create_tag
 create_release
 
+upload mon_ca.pem ${URL}
+
 cd telemetry/
 upload tclient_x86_64 ${URL}
 upload tserver_x86_64 ${URL}
 upload tclient_armv7l ${URL}
 upload tserver_armv7l ${URL}
 upload gather_facts ${URL}
-upload SHA512SUMS ${URL}
+cat SHA512SUMS > ../SHA512SUMS
 
 cd ../secretservice
 upload secretservice ${URL}
 upload SHA512SUMS ${URL}
+cat SHA512SUMS >> ../SHA512SUMS
+
+cd -
+sha512sum mon_ca.pem >> SHA512SUMS
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}"
