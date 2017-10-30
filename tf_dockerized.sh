@@ -20,6 +20,13 @@ generate_ignite_configs() {
 	       hkjn/golang go run ignite.go
 }
 
+fetch_checksums() {
+	docker run --rm -it \
+	           -v $(pwd):/home/go/src/hkjn.me/hkjninfra \
+	           -w /home/go/src/hkjn.me/hkjninfra \
+	       hkjn/golang go run fetch_checksums.go
+}
+
 run_tf() {
 	local action
 	action=$1
