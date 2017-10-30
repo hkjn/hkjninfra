@@ -112,9 +112,9 @@ cat SHA512SUMS > ../SHA512SUMS
 
 cd ../secretservice
 upload secretservice ${URL}
-upload SHA512SUMS ${URL}
 cat SHA512SUMS >> ../SHA512SUMS
 
 cd ..
 sha512sum mon_ca.pem >> SHA512SUMS
+upload SHA512SUMS ${URL}
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}"
