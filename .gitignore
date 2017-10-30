@@ -7,3 +7,4 @@ terraform.tfstate.backup
 ?.?.?.sha512
 terraform.tfvars
 telemetry/bin/
+/SHA512SUMS
