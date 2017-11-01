@@ -68,7 +68,7 @@ func main() {
 					Name: "mon_ca.pem",
 					Path: "/etc/ssl/mon_ca.pem",
 					GetUrl: func(v ignite.Version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/certs/%s", sshash, "mon_ca.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "mon_ca.pem")
 					},
 				},
 			},
