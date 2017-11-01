@@ -182,6 +182,15 @@ resource "google_dns_record_set" "anton_blockpress_me" {
   ]
 }
 
+resource "google_dns_record_set" "dana_blockpress_me" {
+  name = "dana.${google_dns_managed_zone.blockpress_me_zone.dns_name}"
+  type = "A"
+  ttl  = 60
+  managed_zone = "${google_dns_managed_zone.blockpress_me_zone.name}"
+  rrdatas = [
+	"${google_compute_instance.blockpress_me.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
 
 #
 # *.decenter.world
