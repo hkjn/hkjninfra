@@ -161,6 +161,23 @@ resource "google_compute_instance" "builder" {
   }
 }
 
+resource "google_compute_instance" "blockpress_me" {
+  count = "${var.blockpress_me_enabled ? 1 : 0}"
+  name         = "blockpress-me"
+  description  = "The server for blockpress.me."
+  machine_type = "f1-micro"
+  zone         = "europe-west3-b"
+  tags = ["dev", "http"]
+  disk { image = "${var.coreos_alpha_image}" }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.zg0_pubkey}"
+  }
+}
+
 resource "google_compute_instance" "elentari-world" {
   count = "${var.elentari_world_enabled ? 1 : 0}"
   name         = "elentari-world"

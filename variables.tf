@@ -64,4 +64,9 @@ variable "elentari_world_enabled" {
   default = false
 }
 
+variable "blockpress_me_enabled" {
+  description = "Whether blockpress.me node is enabled."
+  default = true
+}
+
 variable "version" {}

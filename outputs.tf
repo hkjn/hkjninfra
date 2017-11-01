@@ -6,6 +6,17 @@ output "decenter_world_addr" {
 }
 
 #
+# *.blockpress.me
+#
+output "blockpress_me_addr" {
+  value = "${google_dns_record_set.blockpress_me.name}"
+}
+
+output "blockpress_me_ip" {
+  value = "${google_dns_record_set.blockpress_me.rrdatas[0]}"
+}
+
+#
 # *.elentari.world
 #
 output "elentari_world_addr" {

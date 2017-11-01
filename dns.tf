@@ -153,6 +153,35 @@ resource "google_dns_record_set" "dev" {
   rrdatas      = ["212.47.239.127"]                        # sz9
 }
 
+#
+# *.blockpress.me
+#
+
+resource "google_dns_managed_zone" "blockpress_me_zone" {
+  name     = "blockpress-me-zone"
+  dns_name = "blockpress.me."
+}
+
+resource "google_dns_record_set" "blockpress_me" {
+  name = "${google_dns_managed_zone.blockpress_me_zone.dns_name}"
+  type = "A"
+  ttl  = 60
+  managed_zone = "${google_dns_managed_zone.blockpress_me_zone.name}"
+  rrdatas = [
+	"${google_compute_instance.blockpress_me.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
+
+resource "google_dns_record_set" "anton_blockpress_me" {
+  name = "anton.${google_dns_managed_zone.blockpress_me_zone.dns_name}"
+  type = "A"
+  ttl  = 60
+  managed_zone = "${google_dns_managed_zone.blockpress_me_zone.name}"
+  rrdatas = [
+	"${google_compute_instance.blockpress_me.network_interface.0.access_config.0.assigned_nat_ip}",
+  ]
+}
+
 
 #
 # *.decenter.world
