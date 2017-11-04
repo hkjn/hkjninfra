@@ -64,6 +64,11 @@ variable "elentari_world_enabled" {
   default = false
 }
 
+variable "guac_enabled" {
+  description = "Whether guac.hkjn.me node is enabled."
+  default = false
+}
+
 variable "blockpress_me_enabled" {
   description = "Whether blockpress.me node is enabled."
   default = true

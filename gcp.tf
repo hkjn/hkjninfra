@@ -161,6 +161,23 @@ resource "google_compute_instance" "builder" {
   }
 }
 
+resource "google_compute_instance" "guac" {
+  count = "${var.guac_enabled ? 1 : 0}"
+  name         = "guac"
+  description  = "The server for guac.hkjn.me."
+  machine_type = "f1-micro"
+  zone         = "europe-west3-a"
+  tags = ["dev", "http"]
+  disk { image = "coreos-alpha-1576-1-0-v20171026" } # TODO
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.zg0_pubkey}"
+  }
+}
+
 resource "google_compute_instance" "blockpress_me" {
   count = "${var.blockpress_me_enabled ? 1 : 0}"
   name         = "blockpress-me"

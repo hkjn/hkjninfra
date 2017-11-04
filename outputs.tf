@@ -47,6 +47,10 @@ output "hkjn_addr_core" {
   value = "${google_dns_record_set.hkjn_core.name}"
 }
 
+output "hkjn_addr_guac" {
+  value = "${google_dns_record_set.hkjn_guac.name}"
+}
+
 output "hkjn_addr_mon" {
   value = "${google_dns_record_set.hkjn_mon.name}"
 }
@@ -79,7 +83,11 @@ output "hkjn_ignite_json_decenter_world" {
   value = "${google_compute_instance.decenter-world.metadata.user-data}"
 }
 
-output "hkjn_ip_decenter_world3" {
+output "hkjn_ip_guac" {
+  value = "${google_compute_instance.guac.network_interface.0.access_config.0.assigned_nat_ip}"
+}
+
+output "hkjn_ip_decenter_world" {
   value = "${google_compute_instance.decenter-world.network_interface.0.access_config.0.assigned_nat_ip}"
 }
 
