@@ -161,6 +161,9 @@ resource "google_compute_instance" "builder" {
   }
 }
 
+# TODO: Add to coreos bootstrap?
+# docker run -ti --rm -v /opt/bin:/out ubuntu:14.04   /bin/bash -c "apt-get -y update && apt-get -y install make && cp /usr/bin/make /out/make"
+
 resource "google_compute_instance" "guac" {
   count = "${var.guac_enabled ? 1 : 0}"
   name         = "guac"
