@@ -168,7 +168,7 @@ resource "google_compute_instance" "guac" {
   machine_type = "f1-micro"
   zone         = "europe-west3-a"
   tags = ["dev", "http"]
-  disk { image = "coreos-alpha-1576-1-0-v20171026" } # TODO
+  disk { image = "${var.coreos_alpha_image}" }
   network_interface {
     network = "${google_compute_network.default.name}"
     access_config {} # Ephemeral IP

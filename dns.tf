@@ -125,6 +125,7 @@ resource "google_dns_record_set" "hkjn_vpn" {
 }
 
 resource "google_dns_record_set" "hkjn_guac" {
+  count = "${var.guac_enabled ? 1 : 0}"
   name = "guac.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
   ttl  = 300
