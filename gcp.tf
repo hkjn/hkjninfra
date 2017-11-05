@@ -91,7 +91,7 @@ resource "google_compute_instance" "core" {
   description  = "Bitcoin Core node"
   machine_type = "g1-small"
   zone         = "europe-west3-b"
-  tags = ["dev", "builder", "bitcoin", "http"]
+  tags = ["dev", "bitcoin", "http"]
   disk {
     image = "${var.coreos_beta_image}"
   }
@@ -157,7 +157,7 @@ resource "google_compute_instance" "builder" {
   metadata {
     sshKeys = "core:${var.zg0_pubkey}"
     version = "${var.version}"
-    user-data = "${file("bootstrap_builder.json")}"
+    user-data = "${file("bootstrap/builder.json")}"
   }
 }
 

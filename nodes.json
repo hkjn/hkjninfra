@@ -1,4 +1,13 @@
 {
+	"builder": {
+		"arch": "x86_64",
+		"projects": [
+			{
+				"name": "hkjninfra",
+				"version": "1.5.5"
+			}
+		]
+	},
 	"core": {
 		"arch": "x86_64",
 		"projects": [
