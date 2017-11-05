@@ -97,6 +97,7 @@ resource "google_dns_record_set" "hkjn_cities" {
 }
 
 resource "google_dns_record_set" "hkjn_builder" {
+  count = "${var.builder_enabled ? 1 : 0}"
   name = "builder.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
   ttl  = 300
