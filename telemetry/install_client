@@ -16,6 +16,6 @@ cd ${WORK_DIR}
 
 info "Fetching version ${VERSION}.."
 curl --progress-bar -fSLO ${INFRA_RELEASE_URL}/tclient_${CPU_ARCH}
-info "Installing binary to /usr/local/bin/tclient.."
-sudo install tclient_${CPU_ARCH} /usr/local/bin/tclient
+info "Installing binary to /opt/bin/tclient.."
+sudo install tclient_${CPU_ARCH} /opt/bin/tclient
 
