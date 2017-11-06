@@ -43,10 +43,6 @@ output "hkjn_addr_cities" {
   value = "${google_dns_record_set.hkjn_cities.name}"
 }
 
-output "hkjn_addr_core" {
-  value = "${google_dns_record_set.hkjn_core.name}"
-}
-
 output "hkjn_addr_guac" {
   value = "${google_dns_record_set.hkjn_guac.name}"
 }
@@ -69,14 +65,6 @@ output "hkjn_ip_gz0" {
 
 output "hkjn_ip_zs10" {
   value = "${google_dns_record_set.hkjn_zs10.rrdatas[0]}"
-}
-
-output "hkjn_ip_core" {
-  value = "${google_compute_instance.core.network_interface.0.access_config.0.assigned_nat_ip}"
-}
-
-output "hkjn_ignite_json_core" {
-  value = "${google_compute_instance.core.metadata.user-data}"
 }
 
 output "hkjn_ignite_json_decenter_world" {

@@ -193,6 +193,9 @@ func (n node) String() string {
 
 // write writes the Ignition config to disk.
 func (n node) Write() error {
+	// TODO: Could create bootstrap directory here if it doesn't exist,
+	// to avoid confusing permission errors if uid / gid we have doesn't
+	// have permission to write .json file.
 	f, err := os.Create(fmt.Sprintf("bootstrap/%s.json", n.name))
 	if err != nil {
 		return err
