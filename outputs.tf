@@ -31,6 +31,10 @@ output "elentari_world_ip" {
 # *.hkjn.me
 #
 
+output "hkjn_addr_exocore" {
+  value = "${google_dns_record_set.hkjn_exocore.name}"
+}
+
 output "hkjn_addr_admin" {
   value = "${google_dns_record_set.hkjn_admin.name}"
 }

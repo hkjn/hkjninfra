@@ -122,7 +122,9 @@ resource "google_dns_record_set" "hkjn_exocore" {
   type = "A"
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas      = ["$(var.exocore_ip)"]
+  rrdatas      = [
+    "${var.exocore_ip}",
+  ]
 }
 
 
