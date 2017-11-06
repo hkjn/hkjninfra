@@ -77,6 +77,11 @@ variable "builder_enabled" {
   default = false
 }
 
+variable "dropcore_enabled" {
+  description = "Whether dropcore node is enabled."
+  default = true
+}
+
 variable "elentari_world_enabled" {
   description = "Whether elentari.world node is enabled."
   default = false

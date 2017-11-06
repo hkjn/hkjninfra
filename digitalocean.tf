@@ -15,10 +15,11 @@ resource "digitalocean_volume" "dropcore_disk0" {
 }
 
 resource "digitalocean_droplet" "dropcore" {
+  count = "${var.dropcore_enabled ? 1 : 0}"
   image = "coreos-stable"
   name = "dropcore"
   region = "fra1"
-  size = "1gb"
+  size = "2gb"
   ssh_keys = [
     "${digitalocean_ssh_key.digitalocean1_id_rsa.id}",
   ]

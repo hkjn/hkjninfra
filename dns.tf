@@ -118,6 +118,7 @@ resource "google_dns_record_set" "hkjn_mon" {
 }
 
 resource "google_dns_record_set" "hkjn_dropcore" {
+  count = "${var.dropcore_enabled ? 1 : 0}"
   name = "dropcore.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
   ttl  = 300
