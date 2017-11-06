@@ -2,14 +2,6 @@ variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
-variable "exoscale_token_file" {
-  default = ".exoscale/token"
-}
-
-variable "exoscale_secret_file" {
-  default = ".exoscale/secret"
-}
-
 variable "aruna_pubkey_arunallave" {
   default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC0qu+LwXD4QG1kQv4F8wjY1bIDR8J72kX/bt8kP/qdYJ0Y0dzSjwGUG79BVBx/StkDRYr+eiDk/fa/mL5ZUCtsraRiOyPoCqvfkIBvHRAjiKynwa/gTCHw1gC/fT2HgTq996VNoqnZDLV4Icc9t7BPMecaNVquBc3+eW6N8fCSV1Oj8/+NlJyV2Efom2ciG/GURknYO5DdhcH+NqmvjhMlBy/XLkfCSGiwNXm4XRHDAe5ZKELTDHH4sFXCPUjSbv7tB75iHDY71lBU+yNb7i3uOO/ODluCxeXranWbVyE76IpA8XoAPdsq0xcfZKLt3ZEGd1NU+v8ZWMXrTUJxX147UGoXsh76pPnY3pgrDxY75K8zgetS2y/TsNcnZP4KvWZK/6hVGasyhmoQxYgr4yj+4L8J9izzGSYYmm+vXL8Q+1ejgWG34KzRJjK8kQvdAKiSu+nnnPSoizsv6WEowAkBQp4pfqjHf5LIFHrfvVoU7HFLKp0wWSYeF/3chl65rhu8y67TkWHBq3mVqCEKqnciXgbYu/qMlfWpv3uHqi1Qhodpm3PPM3O1rk/+WKKrfi1gwcr6F+tz6aq6y1qnTx4YeW0Bqd1uf7J5vEe0HKjjL3Dt9BsW9f5tS3FAic+AtUlPO2vADYYonYc9FiLlux/UCDS7oIBUjsfczsM8ML0M9w== aruna@ipad"
 }
