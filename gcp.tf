@@ -63,16 +63,6 @@ resource "google_compute_firewall" "bitcoin" {
 #
 
 #
-# Bitcoind storage disk
-#
-resource "google_compute_disk" "zg0_disk0" {
-  name  = "test-disk"
-  type  = "pd-ssd"
-  zone  = "europe-west3-b"
-  size  = "200"
-}
-
-#
 # decenter.world persistent disk
 #
 resource "google_compute_disk" "zdisk1" {
@@ -85,38 +75,11 @@ resource "google_compute_disk" "zdisk1" {
 #
 # GCP instances
 #
-
-resource "google_compute_instance" "core" {
-  name         = "core"
-  description  = "Bitcoin Core node"
-  machine_type = "g1-small"
-  zone         = "europe-west3-b"
-  tags = ["dev", "bitcoin", "http"]
-  disk {
-    image = "${var.coreos_beta_image}"
-  }
-  attached_disk {
-    source = "${google_compute_disk.zg0_disk0.self_link}"
-  }
-  network_interface {
-    network = "${google_compute_network.default.name}"
-    access_config {} # Ephemeral IP
-  }
-  metadata {
-    version = "${var.version}"
-    sshKeys = "core:${var.zg0_pubkey}"
-    user-data = "${file("bootstrap/core.json")}"
-  }
-  # TODO: Set sshd port in bootstrap:
-  # cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
-  # [Socket]
-  # ListenStream=
-  # ListenStream=6200
-
-  service_account {
-    scopes = ["userinfo-email", "compute-ro", "storage-ro"]
-  }
-}
+# TODO: Set sshd port in bootstrap:
+# cat /etc/systemd/system/sshd.socket.d/10-sshd-listen-ports.conf
+# [Socket]
+# ListenStream=
+# ListenStream=6200
 
 resource "google_compute_instance" "decenter-world" {
   count = 1

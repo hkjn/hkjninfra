@@ -107,16 +107,6 @@ resource "google_dns_record_set" "hkjn_builder" {
   ]
 }
 
-resource "google_dns_record_set" "hkjn_core" {
-  name = "core.${google_dns_managed_zone.hkjn_zone.dns_name}"
-  type = "A"
-  ttl  = 300
-  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas = [
-    "${google_compute_instance.core.network_interface.0.access_config.0.assigned_nat_ip}",
-  ]
-}
-
 resource "google_dns_record_set" "hkjn_mon" {
   name = "mon.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
