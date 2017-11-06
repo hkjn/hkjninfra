@@ -1,6 +1,7 @@
 *.swp
 terraform.tfstate.backup
 .gcp/
+.digitalocean/
 .keys/
 .terraform.d/
 .terraform/

@@ -2,6 +2,20 @@ variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
+variable "digitalocean_token_file" {
+  default = ".digitalocean/digitalocean0_token"
+}
+
+variable "digitalocean_image" {
+  # Images can be fetched with:
+  # curl -X GET --silent "https://api.digitalocean.com/v2/images?per_page=999" -H "Authorization: Bearer $(cat .digitalocean/digitalocean0_token)" |jq '.'
+  default = "coreos-stable"
+}
+
+variable "digitalocean1_pubkey" {
+  default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCtb2pbWvs+LZapn7yTtKD0NrTBmgTXoDgERZAcJ47ziGawmaBtQ6UgZLppJ10atm/SddQohYwRNnZp1XukbQf83g8XgJ+W91WIHZdggmjnVIGIan+TbNsNVPAtpRXlEIiYSgpy8jHci1q0u6jat2/FGi0x3AUqGUAaUJxwvUEDnkf/g25lq/hyOZi0yoCFjytQC3/TlgFaCW4T/8RRPY4aHnEtY/D0GE4UPBsDBK+wT2/cFrcxAVSNLHW5i44ChzXbCtwTyPv9+FayngjQyPtze84KPZa7gv7XITcAmOnfRRNCN5UlNCJEwMXg2jZtext4OuUPcZo1z5/D6GaP3n+3WALIk87h8+a4aJ0hJ3RwSNEZaKicgTsziNfmuXaztC/DZAG/fpbdG0O+VULwHwTIFJVsXB9yP2bXqmJOTj9/T0NimN8XPzBa+ixo7BPebuMCwyIS31zhdzxoidi3tt/bHCozY0Aoh/sGelku0xIsT8Io3WrMX5Cqgbz3EPnjeMYP9kbG695xwRfRdS0t+qjxezG73wxs4FPwPY4e9T19G8v91XzgbKK9c33S4DyoL4Zf4nGW+i0dqkBsLgegMLXAXsNiwA1hcHDLXm7hO+viwC50RSwHUeCvwNPDzX18QSmw+mt+OOoMClnWdM6IuOzO3q4TwkwMkpqY8ncrmg+8XQ=="
+}
+
 variable "aruna_pubkey_arunallave" {
   default = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC0qu+LwXD4QG1kQv4F8wjY1bIDR8J72kX/bt8kP/qdYJ0Y0dzSjwGUG79BVBx/StkDRYr+eiDk/fa/mL5ZUCtsraRiOyPoCqvfkIBvHRAjiKynwa/gTCHw1gC/fT2HgTq996VNoqnZDLV4Icc9t7BPMecaNVquBc3+eW6N8fCSV1Oj8/+NlJyV2Efom2ciG/GURknYO5DdhcH+NqmvjhMlBy/XLkfCSGiwNXm4XRHDAe5ZKELTDHH4sFXCPUjSbv7tB75iHDY71lBU+yNb7i3uOO/ODluCxeXranWbVyE76IpA8XoAPdsq0xcfZKLt3ZEGd1NU+v8ZWMXrTUJxX147UGoXsh76pPnY3pgrDxY75K8zgetS2y/TsNcnZP4KvWZK/6hVGasyhmoQxYgr4yj+4L8J9izzGSYYmm+vXL8Q+1ejgWG34KzRJjK8kQvdAKiSu+nnnPSoizsv6WEowAkBQp4pfqjHf5LIFHrfvVoU7HFLKp0wWSYeF/3chl65rhu8y67TkWHBq3mVqCEKqnciXgbYu/qMlfWpv3uHqi1Qhodpm3PPM3O1rk/+WKKrfi1gwcr6F+tz6aq6y1qnTx4YeW0Bqd1uf7J5vEe0HKjjL3Dt9BsW9f5tS3FAic+AtUlPO2vADYYonYc9FiLlux/UCDS7oIBUjsfczsM8ML0M9w== aruna@ipad"
 }

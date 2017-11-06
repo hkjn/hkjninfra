@@ -30,6 +30,9 @@ output "elentari_world_ip" {
 #
 # *.hkjn.me
 #
+output "hkjn_addr_dropcore" {
+  value = "${google_dns_record_set.hkjn_dropcore.name}"
+}
 
 output "hkjn_addr_exocore" {
   value = "${google_dns_record_set.hkjn_exocore.name}"
@@ -62,6 +65,10 @@ output "hkjn_addr_vpn" {
 #
 # IP addresses of *.hkjn.me
 #
+
+output "dropcore_ip" {
+  value = "${digitalocean_droplet.dropcore.ipv4_address}"
+}
 
 output "hkjn_ip_gz0" {
   value = "${google_dns_record_set.hkjn_gz0.rrdatas[0]}"
