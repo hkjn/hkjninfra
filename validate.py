@@ -32,6 +32,7 @@ def verify_digest(path, digest):
 def run():
     if len(sys.argv) != 2:
         raise RuntimeError('Usage: {} node'.format(sys.argv[0]))
+    dryrun = os.environ.get('VALIDATE_DRYRUN')
 
     data=json.loads(open("bootstrap/{}.json".format(sys.argv[1])).read())
     for f in data['storage']['files']:
@@ -39,14 +40,18 @@ def run():
             continue
         url = f['contents']['source']
         digest = f['contents']['verification']['hash'].split('sha512-')[1]
-        print('Verifying checksum of {}..'.format(f['path']))
-        print('  Fetching {}, which should have checksum {}..'.format(url, digest[:5]))
-        path = tempfile.mkdtemp(prefix='hkjninfra_checksums')
-        tmppath = os.path.join(path, digest)
-        fetch(url, tmppath)
-        verify_digest(tmppath, digest)
-        print('  Checksum matches!')
-    print('All checksums matched.')
+        if dryrun:
+            print('  URL {} should have checksum {}'.format(url, digest))
+        else:
+            print('Verifying checksum of {}..'.format(f['path']))
+            print('  Fetching {}, which should have checksum {}..'.format(url, digest[:5]))
+            path = tempfile.mkdtemp(prefix='hkjninfra_checksums')
+            tmppath = os.path.join(path, digest)
+            fetch(url, tmppath)
+            verify_digest(tmppath, digest)
+            print('  Checksum matches!')
+    if not dryrun:
+        print('All checksums matched.')
 
 if __name__ == '__main__':
     run()
