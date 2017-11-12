@@ -68,7 +68,7 @@ func main() {
 					Name: "mon_ca.pem",
 					Path: "/etc/ssl/mon_ca.pem",
 					GetUrl: func(v ignite.Version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "mon_ca.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/%s/certs/%s", sshash, "hkjninfra", v, "mon_ca.pem")
 					},
 				},
 			},
@@ -109,14 +109,14 @@ func main() {
 					ChecksumKey: "decenter.world.pem",
 					Path:        "/etc/ssl/client.pem",
 					GetUrl: func(v ignite.Version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "decenter.world.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/%s/certs/%s", sshash, "decenter.world", v, "decenter.world.pem")
 					},
 				}, {
 					Name:        "client-key.pem",
 					ChecksumKey: "decenter.world-key.pem",
 					Path:        "/etc/ssl/client-key.pem",
 					GetUrl: func(v ignite.Version) string {
-						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/certs/%s", sshash, v, "decenter.world-key.pem")
+						return fmt.Sprintf("https://admin1.hkjn.me/%s/files/%s/%s/certs/%s", sshash, "decenter.world", v, "decenter.world-key.pem")
 					},
 				},
 			},
