@@ -16,6 +16,8 @@ fi
 if [[ ! -d ${BASE_DIR} ]]; then
 	echo "Creating '${BASE_DIR}'.."
 	mkdir ${BASE_DIR}
+else
+	echo "Certificate directory '${BASE_DIR}' exists.."
 fi
 
 if [[ ! -e ca-config.json ]]; then
