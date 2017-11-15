@@ -70,6 +70,10 @@ output "dropcore_ip" {
   value = "${digitalocean_droplet.dropcore.ipv4_address}"
 }
 
+output "scalewaytest_ip" {
+  value = "${scaleway_server.sc1.public_ip}"
+}
+
 output "hkjn_ip_gz0" {
   value = "${google_dns_record_set.hkjn_gz0.rrdatas[0]}"
 }

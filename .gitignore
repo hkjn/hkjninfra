@@ -2,6 +2,7 @@
 terraform.tfstate.backup
 .gcp/
 .digitalocean/
+.scaleway/
 .keys/
 .terraform.d/
 .terraform/
