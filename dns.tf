@@ -6,6 +6,15 @@ resource "google_dns_managed_zone" "hkjn_zone" {
   dns_name = "hkjn.me."
 }
 
+resource "google_dns_record_set" "hkjn_prod" {
+  count = "${var.hkjnprod_enabled ? 1 : 0}"
+  name = "prod.${google_dns_managed_zone.hkjn_zone.dns_name}"
+  type = "A"
+  ttl  = 150
+  managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
+  rrdatas      = ["${scaleway_server.hkjnprod.public_ip}"]
+}
+
 resource "google_dns_record_set" "hkjn_web" {
   name = "${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
@@ -74,7 +83,7 @@ resource "google_dns_record_set" "hkjn_admin" {
   ttl  = 300
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "130.211.84.102",
+    "${var.admin_ip}",
   ]
 }
 

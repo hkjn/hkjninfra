@@ -2,7 +2,7 @@ variable "gcloud_credentials" {
   default = ".gcp/tf-dns-editor.json"
 }
 
-variable "scalewaytest_enabled" {
+variable "hkjnprod_enabled" {
   default = false
 }
 
@@ -72,6 +72,10 @@ variable "coreos_alpha_image" {
 #
 variable "coreos_beta_image" {
   default = "coreos-beta-1492-6-0-v20170906"
+}
+
+variable "admin_ip" {
+  default = "130.211.84.102"
 }
 
 variable "exocore_ip" {
