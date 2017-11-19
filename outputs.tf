@@ -71,7 +71,7 @@ output "dropcore_ip" {
 }
 
 output "hkjnprod_ip" {
-  value = "${scaleway_server.hkjnprod.public_ip}"
+  value = "${module.scaleway.public_ip}"
 }
 
 output "hkjn_ip_gz0" {

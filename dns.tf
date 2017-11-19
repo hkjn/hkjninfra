@@ -12,7 +12,7 @@ resource "google_dns_record_set" "hkjn_prod" {
   type = "A"
   ttl  = 150
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
-  rrdatas      = ["${scaleway_server.hkjnprod.public_ip}"]
+  rrdatas      = ["${module.scaleway.public_ip}"]
 }
 
 resource "google_dns_record_set" "hkjn_web" {

@@ -3,25 +3,19 @@ variable "gcloud_credentials" {
 }
 
 variable "hkjnprod_enabled" {
-  default = false
-}
-
-variable "scaleway_region" {
-  default = "par1"
+  default = true
 }
 
 variable "scaleway_organization_file" {
   default = ".scaleway/scaleway0_organization"
 }
 
-variable "scaleway_key_file" {
-  default = ".scaleway/scaleway0_key"
+variable "scaleway_token_file" {
+  default = ".scaleway/scaleway0_token"
 }
 
-variable "scaleway_image" {
-  # Fetched with:
-  # curl -H "X-Auth-Token: $(cat .scaleway/scaleway0_key)" -H 'Content-Type: application/json' 'https://cp-par1.scaleway.com/images/?page=1&per_page=100' > scaleway_images.json
-  default = "ee0d3a38-1e8a-4407-bc02-d35dd588efa2"
+variable "scaleway_region" {
+  default = "par1"
 }
 
 variable "digitalocean_token_file" {
