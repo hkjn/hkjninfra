@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"os/user"
 	"strings"
 )
 
@@ -197,7 +198,8 @@ func (n node) Write() error {
 	_, err := os.Stat(bp)
 	if os.IsNotExist(err) {
 		if mkerr := os.Mkdir(bp, 755); mkerr != nil {
-			return fmt.Errorf("failed to create dir %q: %v", bp, mkerr)
+			u, _ := user.Current()
+			return fmt.Errorf("failed to create dir %q as %d:%d: %v", bp, u.Uid, u.Gid, mkerr)
 		}
 	} else if err != nil {
 		return fmt.Errorf("failed to stat %q: %v", bp, err)
