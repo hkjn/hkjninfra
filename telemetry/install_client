@@ -23,3 +23,9 @@ fi
 info "Installing binary to /opt/bin/tclient.."
 sudo install tclient_${CPU_ARCH} /opt/bin/tclient
 
+if [[ ! -f /etc/systemd/system/tclient.service ]] || [[ ! -f /etc/systemd/system/tclient.timer ]]; then
+	info "Installing and starting tclient.service and .timer units.."
+	sudo cp ${BASE}/telemetry/tclient.{service,timer} /etc/systemd/system/
+	sudo systemctl daemon-reload
+	sudo systemctl start tclient.service tclient.timer
+fi

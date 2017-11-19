@@ -23,3 +23,9 @@ fi
 info "Installing binary to /usr/local/bin/tserver.."
 sudo install tserver_${CPU_ARCH} /usr/local/bin/tserver
 
+if [[ ! -f /etc/systemd/system/tserver.service ]]; then
+	info "Installing and starting tserver.service unit.."
+	sudo cp ${BASE}/telemetry/tserver.service /etc/systemd/system/
+	sudo systemctl daemon-reload
+	sudo systemctl start tserver.service
+fi
