@@ -10,8 +10,7 @@ COPY ["vendor", "./vendor/"]
 USER go
 
 RUN go test && \
-    go install ./cmd/
-
+    go build -o /home/go/bin/secretservice ./cmd/
 WORKDIR /home/go/bin/
 
 RUN sha512sum secretservice* > SHA512SUMS
