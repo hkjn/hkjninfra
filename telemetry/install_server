@@ -16,6 +16,10 @@ cd ${WORK_DIR}
 
 info "Fetching version ${VERSION}.."
 curl --progress-bar -fSLO ${INFRA_RELEASE_URL}/tserver_${CPU_ARCH}
+if [[ ! -d /opt/bin ]]; then
+	info "Creating /opt/bin.."
+	sudo mkdir -p /opt/bin
+fi
 info "Installing binary to /usr/local/bin/tserver.."
 sudo install tserver_${CPU_ARCH} /usr/local/bin/tserver
 
