@@ -38,8 +38,8 @@ output "hkjn_addr_exocore" {
   value = "${google_dns_record_set.hkjn_exocore.name}"
 }
 
-output "hkjn_addr_admin" {
-  value = "${google_dns_record_set.hkjn_admin.name}"
+output "hkjn_addr_admin0" {
+  value = "${google_dns_record_set.hkjn_admin0.name}"
 }
 
 output "hkjn_addr_admin1" {

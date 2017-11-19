@@ -77,23 +77,23 @@ resource "google_dns_record_set" "hkjn_mail" {
 #	]
 #}
 
-resource "google_dns_record_set" "hkjn_admin" {
-  name = "admin.${google_dns_managed_zone.hkjn_zone.dns_name}"
+resource "google_dns_record_set" "hkjn_admin0" {
+  name = "admin0.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
-  ttl  = 300
+  ttl  = 100
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "${var.admin_ip}",
+    "${var.admin0_ip}",
   ]
 }
 
 resource "google_dns_record_set" "hkjn_admin1" {
   name = "admin1.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
-  ttl  = 300
+  ttl  = 100
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
-    "51.15.200.169",
+    "${var.admin1_ip}",
   ]
 }
 

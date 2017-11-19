@@ -68,8 +68,12 @@ variable "coreos_beta_image" {
   default = "coreos-beta-1492-6-0-v20170906"
 }
 
-variable "admin_ip" {
-  default = "130.211.84.102"
+variable "admin0_ip" {
+  default = "35.195.244.206"
+}
+
+variable "admin1_ip" {
+  default = "51.15.200.169"
 }
 
 variable "exocore_ip" {
