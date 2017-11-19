@@ -3,19 +3,14 @@
 #
 set -euo pipefail
 
-declare BUILD_IMAGE="hkjn/workspace:$(uname -m)-1.4.0"
-declare BUILD_DIR="$(mktemp -d telemetry_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd ${BASE_DIR}
 declare VERSION=$(cat ../VERSION)
 
-echo "Building from ${BUILD_IMAGE} in '${BUILD_DIR}'.."
-trap "rm -rf ${BUILD_DIR} bin/" EXIT
-sed "s|{{ARG_FROM}}|${BUILD_IMAGE}|g" Dockerfile.build > ${BUILD_DIR}/Dockerfile
-cp -r client server report vendor gather_facts ${BUILD_DIR}
+echo "Building.."
 
-docker build --build-arg version=${VERSION} -t telemetry-build ${BUILD_DIR}
+docker build --build-arg version=${VERSION} -t telemetry-build .
 echo "Running tbuild container.."
 docker run --name tbuild telemetry-build
 echo "Removing bin.."

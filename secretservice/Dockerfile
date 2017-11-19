@@ -1,4 +1,4 @@
-FROM hkjn/workspace-alpine:1.5.1
+FROM hkjn/workspace-alpine:1.5.0-arm
 
 ENV CGO_ENABLED=0
 WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/

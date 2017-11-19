@@ -1,4 +1,4 @@
-FROM {{ARG_FROM}}
+FROM hkjn/workspace-alpine:1.5.0-arm
 
 ARG version
 ENV VERSION=${version} \
