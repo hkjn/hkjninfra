@@ -1,45 +1,18 @@
 // ignite.go generates Ignite JSON configs.
 //
-// TODO: Update fetch to generate checksums/ correctly, including for secrets.
 // TODO: could version the systemd units as well.
 package main
 
 import (
-	"crypto/sha512"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"strings"
 
 	"hkjn.me/hkjninfra/ignite"
+	"hkjn.me/hkjninfra/secretservice"
 )
-
-const (
-	// saltFile is the path to the secretservice salt file.
-	saltFile = "/etc/secrets/secretservice/salt"
-	// seedFile is the path to the secretservice seed file.
-	seedFile = "/etc/secrets/secretservice/seed"
-)
-
-// getSecretServiceHash returns the secret service hash read from files.
-func getSecretServiceHash() (string, error) {
-	salt, err := ioutil.ReadFile(saltFile)
-	if err != nil {
-		return "", err
-	}
-	seed, err := ioutil.ReadFile(seedFile)
-	if err != nil {
-		return "", err
-	}
-	seed = []byte(strings.TrimSpace(string(seed)))
-	salt = []byte(strings.TrimSpace(string(salt)))
-	val := fmt.Sprintf("%s|%s\n", seed, salt)
-	digest := sha512.Sum512([]byte(val))
-	return fmt.Sprintf("%x", digest), nil
-}
 
 func main() {
-	sshash, err := getSecretServiceHash()
+	sshash, err := secretservice.GetHash()
 	if err != nil {
 		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
 	}

@@ -1,15 +1,16 @@
-FROM {{ARG_FROM}}
+FROM hkjn/workspace-alpine:1.5.1
 
 ENV CGO_ENABLED=0
 WORKDIR /home/go/src/hkjn.me/hkjninfra/secretservice/
 
 COPY ["*.go", "./"]
+COPY ["cmd", "./cmd/"]
 COPY ["vendor", "./vendor/"]
 
 USER go
 
 RUN go test && \
-    go install
+    go install ./cmd/
 
 WORKDIR /home/go/bin/
 

@@ -5,15 +5,11 @@
 
 set -euo pipefail
 
-declare BUILD_IMAGE="hkjn/workspace:$(uname -m )-1.4.0"
-declare BUILD_DIR="$(mktemp -d secretservice_build_XXXX --tmpdir=/tmp)"
 declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd ${BASE_DIR}
-sed "s|{{ARG_FROM}}|${BUILD_IMAGE}|g" Dockerfile.build > ${BUILD_DIR}/Dockerfile
-cp -r *.go vendor ${BUILD_DIR}/
-echo "Building from ${BUILD_IMAGE} in '${BASE_DIR}'.."
-docker build -t secretservice-build ${BUILD_DIR}
+echo "Building ssbuild.."
+docker build -t secretservice-build .
 echo "Running ssbuild container.."
 docker run --name ssbuild --entrypoint sh secretservice-build
 echo "Copying out binaries from container.."
