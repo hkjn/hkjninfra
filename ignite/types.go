@@ -193,10 +193,16 @@ func (n node) String() string {
 
 // write writes the Ignition config to disk.
 func (n node) Write() error {
-	// TODO: Could create bootstrap directory here if it doesn't exist,
-	// to avoid confusing permission errors if uid / gid we have doesn't
-	// have permission to write .json file.
-	f, err := os.Create(fmt.Sprintf("bootstrap/%s.json", n.name))
+	bp := "bootstrap"
+	_, err := os.Stat(bp)
+	if os.IsNotExist(err) {
+		if mkerr := os.Mkdir(bp, 755); mkerr != nil {
+			return fmt.Errorf("failed to create dir %q: %v", bp, mkerr)
+		}
+	} else if err != nil {
+		return fmt.Errorf("failed to stat %q: %v", bp, err)
+	}
+	f, err := os.Create(fmt.Sprintf("%s/%s.json", bp, n.name))
 	if err != nil {
 		return err
 	}
