@@ -13,6 +13,7 @@ show_ignite_diff() {
 }
 
 generate_ignite_configs() {
+	echo "Running ignite.go tool to generate Ignite .json.."
 	docker run --rm -it \
 	           -v /etc/secrets/secretservice:/etc/secrets/secretservice:ro \
 	           -v $(pwd):/home/go/src/hkjn.me/hkjninfra \
@@ -39,6 +40,7 @@ run_tf() {
 			return
 		fi
 	fi
+	echo "Running 'terraform $@'.."
 	# TODO: Below we take current VERSION file, but could run an older version
 	# for some targets, as specified in ignition.py..
 	echo "version = \"$(cat VERSION)\"" > terraform.tfvars
