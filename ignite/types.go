@@ -199,7 +199,7 @@ func (n node) Write() error {
 	if os.IsNotExist(err) {
 		if mkerr := os.Mkdir(bp, 755); mkerr != nil {
 			u, _ := user.Current()
-			return fmt.Errorf("failed to create dir %q as %d:%d: %v", bp, u.Uid, u.Gid, mkerr)
+			return fmt.Errorf("failed to create dir %q as %s:%s: %v", bp, u.Uid, u.Gid, mkerr)
 		}
 	} else if err != nil {
 		return fmt.Errorf("failed to stat %q: %v", bp, err)
