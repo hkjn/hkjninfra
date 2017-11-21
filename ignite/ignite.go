@@ -80,7 +80,7 @@ type (
 
 	nodes       map[nodeName]node
 	ProjectName string
-	SecretFiles []SecretFile
+	nodeFiles   []nodeFile
 	// Project is something that a node should run
 	Project struct {
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
@@ -92,7 +92,7 @@ type (
 		// binaries are the binaries needed for the project
 		binaries []binary
 		// secretFilenames are the secrets needed for the project
-		secretFiles SecretFiles
+		secretFiles nodeFiles
 		// secretServiceDomain is the base domain for the secret service
 		secretServiceDomain string
 	}
@@ -105,7 +105,7 @@ type (
 	ProjectConfig struct {
 		units       []systemdUnit
 		files       []nodeFile
-		secretFiles SecretFiles
+		secretFiles nodeFiles
 	}
 	ProjectConfigs struct {
 		secretServiceDomain string
@@ -133,8 +133,8 @@ type (
 	projectJSON struct {
 		Units   []string     `json:"units"`
 		Dropins []DropinName `json:"dropins"`
-		Files   []nodeFile   `json:"files"`
-		Secrets SecretFiles  `json:"secrets"`
+		Files   nodeFiles    `json:"files"`
+		Secrets nodeFiles    `json:"secrets"`
 	}
 	projectsJSON map[ProjectName]projectJSON
 	ConfigJSON   struct { // TODO: better name
@@ -143,12 +143,6 @@ type (
 	}
 	DropinName struct {
 		Unit, Dropin string
-	}
-	// FIXMEH: rename to NodeFile
-	SecretFile struct {
-		Name        string `json:"name"`
-		ChecksumKey string `json:"checksum_key"`
-		Path        string `json:"path"`
 	}
 	// projectFiles represents the files to include for a project.
 	ProjectFiles struct {
@@ -159,7 +153,8 @@ type (
 		// Files are the non-systemd files for the project
 		Files []nodeFile
 		// SecretFiles are the secret files for the project
-		SecretFiles []SecretFile
+		// FIXMEH: combine in Files
+		SecretFiles []nodeFile
 	}
 )
 
@@ -423,13 +418,13 @@ func (ps Projects) String() string {
 	return strings.Join(names, ", ")
 }
 
-func (sf SecretFiles) String() string {
-	if len(sf) == 0 {
-		return "[empty SecretFiles]"
+func (nf nodeFiles) String() string {
+	if len(nf) == 0 {
+		return "[empty nodeFile]"
 	}
-	files := make([]string, len(sf), len(sf))
-	for i, f := range sf {
-		files[i] = fmt.Sprintf("SecretFile{Name: %s, ChecksumKey: %s, Path: %s}}", f.Name, f.ChecksumKey, f.Path)
+	files := make([]string, len(nf), len(nf))
+	for i, f := range nf {
+		files[i] = fmt.Sprintf("nodeFile{Name: %s, ChecksumKey: %s, Path: %s}}", f.Name, f.ChecksumKey, f.Path)
 	}
 	return strings.Join(files, ", ")
 }
