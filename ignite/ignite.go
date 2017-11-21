@@ -144,18 +144,6 @@ type (
 	DropinName struct {
 		Unit, Dropin string
 	}
-	// projectFiles represents the files to include for a project.
-	ProjectFiles struct {
-		// Units are the names of the systemd units for the project
-		UnitNames []string
-		// Dropins are the names of the systemd units and overrides for the project
-		DropinNames []DropinName
-		// Files are the non-systemd files for the project
-		Files []nodeFile
-		// SecretFiles are the secret files for the project
-		// FIXMEH: combine in Files
-		SecretFiles []nodeFile
-	}
 )
 
 func (b binary) toFile() file {
@@ -299,27 +287,6 @@ func newProjectConfig(conf projectJSON) (*ProjectConfig, error) {
 		files:       conf.Files,
 		secretFiles: conf.Secrets,
 	}, nil
-}
-
-// loadUnits returns the systemd units for the project.
-// FIXMEH: remove
-func (pf ProjectFiles) loadUnits() ([]systemdUnit, error) {
-	units := []systemdUnit{}
-	for _, unitFile := range pf.UnitNames {
-		unit, err := newSystemdUnit(unitFile)
-		if err != nil {
-			return nil, err
-		}
-		units = append(units, *unit)
-	}
-	for _, d := range pf.DropinNames {
-		dropin, err := d.Load()
-		if err != nil {
-			return nil, err
-		}
-		units = append(units, *dropin)
-	}
-	return units, nil
 }
 
 func getChecksums(name ProjectName, version Version) (map[string]string, error) {
@@ -532,26 +499,6 @@ func (conf ConfigJSON) CreateNodes() (nodes, error) {
 		}
 	}
 	return result, nil
-}
-
-// GetProjectConfigs returns the project configs, given files to load.
-func GetProjectConfigs(secretServiceDomain string, pfconf map[ProjectName]ProjectFiles) (*ProjectConfigs, error) {
-	conf := map[ProjectName]ProjectConfig{}
-	for name, pfs := range pfconf {
-		units, err := pfs.loadUnits()
-		if err != nil {
-			return nil, err
-		}
-		conf[name] = ProjectConfig{
-			units:       units,
-			files:       pfs.Files,
-			secretFiles: pfs.SecretFiles,
-		}
-	}
-	return &ProjectConfigs{
-		secretServiceDomain: secretServiceDomain,
-		configs:             conf,
-	}, nil
 }
 
 // ReadConfig returns the node/project configs, read from disk.
