@@ -8,6 +8,8 @@ import (
 )
 
 const (
+	// BaseDomain is the base domain for the service.
+	BaseDomain = "admin1.hkjn.me"
 	// saltFile is the path to the secretservice salt file.
 	saltFile = "/etc/secrets/secretservice/salt"
 	// seedFile is the path to the secretservice seed file.
@@ -29,7 +31,4 @@ func GetHash() (string, error) {
 	val := fmt.Sprintf("%s|%s\n", seed, salt)
 	digest := sha512.Sum512([]byte(val))
 	return fmt.Sprintf("%x", digest), nil
-}
-func main() {
-	fmt.Println("vim-go")
 }

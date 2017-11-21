@@ -13,6 +13,8 @@ import (
 
 	"github.com/kelseyhightower/envconfig"
 	"golang.org/x/crypto/acme/autocert"
+
+	"hkjn.me/hkjninfra/secretservice"
 )
 
 type Config struct {
@@ -102,7 +104,7 @@ func main() {
 		m := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			Cache:      autocert.DirCache("/etc/secrets/acme/"),
-			HostPolicy: autocert.HostWhitelist("admin1.hkjn.me"),
+			HostPolicy: autocert.HostWhitelist(secretservice.BaseDomain),
 		}
 		s.TLSConfig = &tls.Config{GetCertificate: m.GetCertificate}
 		log.Fatal(s.ListenAndServeTLS("", ""))

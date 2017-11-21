@@ -1,3 +1,4 @@
+// fetch_checksums.go is a tool to read nodes.json
 package main
 
 import (
@@ -8,6 +9,7 @@ import (
 	"os"
 
 	"hkjn.me/hkjninfra/ignite"
+	"hkjn.me/hkjninfra/secretservice"
 )
 
 // checkClose closes specified closer and sets err to the result.
@@ -49,12 +51,12 @@ func fetch(url string, project ignite.ProjectName, version ignite.Version) (err 
 	return err
 }
 
-// download downloads the checksum files.
-func download(conf ignite.NodeConfigs) error {
+// downloadChecksums downloads the checksum files.
+func downloadChecksums(conf ignite.ConfigJSON, sshash string) error {
 	fetched := map[string]bool{}
-	for node, nc := range conf {
+	for node, nc := range conf.Nodes {
 		log.Printf("Fetching checksums for node %q..\n", node)
-		for _, p := range nc.Projects {
+		for _, pv := range nc.ProjectVersions {
 			url := p.GetChecksumURL()
 			if !fetched[url] {
 				log.Printf("Fetching %q..\n", url)
@@ -63,18 +65,45 @@ func download(conf ignite.NodeConfigs) error {
 				}
 				fetched[url] = true
 			}
+			// TODO: using pv.Name and pv.Version, get the SecretURLs from conf.Projects
+			secretURLs := p.GetSecretURLs(sshash, secretservice.BaseDomain)
+			log.Printf("FIXMEH: secret urls for %q: %v\n", p.Name, secretURLs)
+			// FIXMEH: NodeConfig.Load(ProjectConfigs) is what sets p.secretFiles, so without that
+			// there's no way to go from nodes.json -> secret service URLs.. maybe refactor out
+			// projects.json to hold []SecretFile?
+			for _, url := range secretURLs {
+				if !fetched[url] {
+					log.Printf("Fetching secret %q..\n", url)
+					if err := fetch(url, p.Name, p.Version); err != nil {
+						return err
+					}
+					fetched[url] = true
+				}
+			}
 		}
 	}
 	return nil
 }
 
 func main() {
-	conf, err := ignite.ReadNodeConfigs()
+	conf, err := ignite.ReadConfig()
+	//conf, err := ignite.ReadNodeConfigs()
 	if err != nil {
 		log.Fatalf("Failed to read node config: %v\n", err)
 	}
-	log.Printf("Read %d node configs..\n", len(conf))
-	if err := download(conf); err != nil {
+	for k, c := range conf.Projects {
+		log.Printf("FIXMEH: project %q: %+v\n", k, c)
+	}
+	for k, c := range conf.Nodes {
+		log.Printf("FIXMEH: node %q: %+v\n", k, c)
+	}
+
+	sshash, err := secretservice.GetHash()
+	if err != nil {
+		log.Fatalf("Unable to fetch secret service hash: %v\n", err)
+	}
+	log.Printf("Read %d node configs..\n", len(conf.Nodes))
+	if err := downloadChecksums(*conf, sshash); err != nil {
 		log.Fatalf("Failed to download checksums: %v\n", err)
 	}
 }

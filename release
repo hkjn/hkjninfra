@@ -48,6 +48,10 @@ create_tag() {
 	git push origin --tags
 }
 
+json_escape () {
+    echo "${1}" | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+}
+
 create_release() {
 	info "Creating release.."
 	local payload
@@ -55,7 +59,7 @@ create_release() {
 {
   "tag_name": "$VERSION",
   "name": "$VERSION",
-  "body": "$COMMIT_MSG",
+  "body": $(json_escape "$COMMIT_MSG"),
   "draft": false,
   "prerelease": false
 }

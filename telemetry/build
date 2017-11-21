@@ -8,7 +8,7 @@ declare BASE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd ${BASE_DIR}
 declare VERSION=$(cat ../VERSION)
 
-echo "Building.."
+echo "Building telemetry in container...."
 
 docker build --build-arg version=${VERSION} -t telemetry-build .
 echo "Running tbuild container.."

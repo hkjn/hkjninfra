@@ -112,13 +112,15 @@ resource "google_compute_instance" "builder" {
   machine_type = "n1-standard-8"
   zone         = "europe-west3-b"
   tags         = ["dev", "http"]
-  disk { image = "${var.coreos_alpha_image}" }
+  disk {
+    image = "${var.coreos_alpha_image}"
+  }
   network_interface {
     network = "${google_compute_network.default.name}"
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${var.zg0_pubkey}"
+    sshKeys = "core:${var.gcloud0_pubkey}"
     version = "${var.version}"
     user-data = "${file("bootstrap/builder.json")}"
   }

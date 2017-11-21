@@ -66,11 +66,15 @@ output "hkjn_addr_vpn" {
 # IP addresses of *.hkjn.me
 #
 
+output "builder_ip" {
+  value = "${google_compute_instance.builder.network_interface.0.access_config.0.assigned_nat_ip}"
+}
+
 output "dropcore_ip" {
   value = "${digitalocean_droplet.dropcore.ipv4_address}"
 }
 
-output "hkjnprod_ip" {
+output "hkjn_prod_ip" {
   value = "${module.scaleway.public_ip}"
 }
 
