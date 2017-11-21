@@ -2,8 +2,10 @@
 package main
 
 import (
+	"crypto/sha512"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -20,18 +22,8 @@ func checkClose(c io.Closer, err *error) {
 	}
 }
 
-// fetch downloads the checksums from specified url.
-func fetch(url string, project ignite.ProjectName, version ignite.Version) (err error) {
-	// TODO: Also need to handle secrets, like decenter.world.pem for "decenter.world"..
-	// fetch from secret service directly?
-	if project == ignite.ProjectName("bitcoin") {
-		// TODO: Instead of special-casing "core" (bitcoin) project, which has
-		// no checksums since there's no binaries to download, maybe start
-		// checksumming / versioning systemd unit (.service, .mount) and
-		// dropins (.conf) within the project?
-		log.Printf("Skipping bitcoin, no binaries to download..\n")
-		return nil
-	}
+// checksumSecret downloads and checksums specified secret, and appends it to the checksum file.
+func checksumSecret(url, checksumfile, secretfile string) error {
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
@@ -40,13 +32,42 @@ func fetch(url string, project ignite.ProjectName, version ignite.Version) (err 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("unexpected status code from GET %q, want 200 OK, got %s", url, resp.Status)
 	}
-	filename := fmt.Sprintf("checksums/%s_%s.sha512", project, version)
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	digest := sha512.Sum512(b)
+
+	f, err := os.OpenFile(checksumfile, os.O_RDWR|os.O_CREATE, 0755)
+	if err != nil {
+		return err
+	}
+	defer checkClose(f, &err)
+	log.Printf("Appending checksum %x to %q..\n", digest, checksumfile)
+	line := fmt.Sprintf("%x  %s", digest, secretfile)
+	if _, err := f.Write([]byte(line)); err != nil {
+		return err
+	}
+	_, err = io.Copy(f, resp.Body)
+	return err
+}
+
+// fetchChecksums downloads specified URL of checksum file.
+func fetchChecksums(url, filename string) (err error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer checkClose(resp.Body, &err)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code from GET %q, want 200 OK, got %s", url, resp.Status)
+	}
 	f, err := os.Create(filename)
 	if err != nil {
 		return err
 	}
 	defer checkClose(f, &err)
-	log.Printf("Writing to %q..\n", filename)
+	log.Printf("Saving checksum file to %q..\n", filename)
 	_, err = io.Copy(f, resp.Body)
 	return err
 }
@@ -57,24 +78,34 @@ func downloadChecksums(conf ignite.ConfigJSON, sshash string) error {
 	for node, nc := range conf.Nodes {
 		log.Printf("Fetching checksums for node %q..\n", node)
 		for _, pv := range nc.ProjectVersions {
-			url := p.GetChecksumURL()
+			// TODO: Also need to handle secrets, like decenter.world.pem for "decenter.world"..
+			// fetch from secret service directly?
+			if pv.Name == ignite.ProjectName("bitcoin") {
+				// TODO: Instead of special-casing "core" (bitcoin) project, which has
+				// no checksums since there's no binaries to download, maybe start
+				// checksumming / versioning systemd unit (.service, .mount) and
+				// dropins (.conf) within the project?
+				log.Printf("Skipping bitcoin, no binaries to download..\n")
+				continue
+			}
+			url := ignite.GetChecksumURL(pv)
+			filename := fmt.Sprintf("checksums/%s_%s.sha512", pv.Name, pv.Version)
 			if !fetched[url] {
 				log.Printf("Fetching %q..\n", url)
-				if err := fetch(url, p.Name, p.Version); err != nil {
+				if err := fetchChecksums(url, filename); err != nil {
 					return err
 				}
 				fetched[url] = true
 			}
-			// TODO: using pv.Name and pv.Version, get the SecretURLs from conf.Projects
-			secretURLs := p.GetSecretURLs(sshash, secretservice.BaseDomain)
-			log.Printf("FIXMEH: secret urls for %q: %v\n", p.Name, secretURLs)
-			// FIXMEH: NodeConfig.Load(ProjectConfigs) is what sets p.secretFiles, so without that
-			// there's no way to go from nodes.json -> secret service URLs.. maybe refactor out
-			// projects.json to hold []SecretFile?
-			for _, url := range secretURLs {
+			secrets, err := conf.Projects.GetSecrets(pv.Name)
+			if err != nil {
+				return err
+			}
+			for _, secret := range secrets {
+				url := secret.GetURL(secretservice.BaseDomain, sshash, pv)
 				if !fetched[url] {
-					log.Printf("Fetching secret %q..\n", url)
-					if err := fetch(url, p.Name, p.Version); err != nil {
+					log.Printf("Fetching and checksumming secret %q from %q..\n", secret.Name, url)
+					if err := checksumSecret(url, filename, secret.Name); err != nil {
 						return err
 					}
 					fetched[url] = true
@@ -87,15 +118,8 @@ func downloadChecksums(conf ignite.ConfigJSON, sshash string) error {
 
 func main() {
 	conf, err := ignite.ReadConfig()
-	//conf, err := ignite.ReadNodeConfigs()
 	if err != nil {
 		log.Fatalf("Failed to read node config: %v\n", err)
-	}
-	for k, c := range conf.Projects {
-		log.Printf("FIXMEH: project %q: %+v\n", k, c)
-	}
-	for k, c := range conf.Nodes {
-		log.Printf("FIXMEH: node %q: %+v\n", k, c)
 	}
 
 	sshash, err := secretservice.GetHash()

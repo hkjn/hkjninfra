@@ -78,24 +78,8 @@ type (
 		systemdUnits []systemdUnit
 	}
 
-	nodes       map[nodeName]node
-	ProjectName string
-	nodeFiles   []nodeFile
-	// Project is something that a node should run
-	Project struct {
-		// name is the name of a project the node should run node, e.g. "hkjninfra"
-		Name ProjectName `json:"name"`
-		// version is the version of the project that should run on the node, e.g. "1.0.1"
-		Version Version `json:"version"`
-		// units are the systemd units for the project
-		units []systemdUnit
-		// binaries are the binaries needed for the project
-		binaries []binary
-		// secretFilenames are the secrets needed for the project
-		secretFiles nodeFiles
-		// secretServiceDomain is the base domain for the secret service
-		secretServiceDomain string
-	}
+	nodes          map[nodeName]node
+	ProjectName    string
 	ProjectVersion struct {
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
 		Name ProjectName `json:"name"`
@@ -104,15 +88,13 @@ type (
 	}
 	ProjectConfig struct {
 		units       []systemdUnit
-		files       []nodeFile
-		secretFiles nodeFiles
+		files       []NodeFile
+		secretFiles NodeFiles
 	}
 	ProjectConfigs struct {
 		secretServiceDomain string
 		configs             map[ProjectName]ProjectConfig
 	}
-	// Projects is a list of projects that a node should run
-	Projects []Project
 	// NodeConfig is the configuration of a single node
 	NodeConfig struct {
 		// sshash is the secretservice hash to use
@@ -125,20 +107,23 @@ type (
 	// NodeConfigs is the configuration of all nodes
 	NodeConfigs map[nodeName]NodeConfig
 
-	nodeFile struct {
+	NodeFile struct {
 		Path        string `json:"path"`
 		Name        string `json:"name"`
 		ChecksumKey string `json:"checksum_key"`
 	}
+	NodeFiles   []NodeFile
+	Secret      NodeFile
+	Secrets     []Secret
 	projectJSON struct {
 		Units   []string     `json:"units"`
 		Dropins []DropinName `json:"dropins"`
-		Files   nodeFiles    `json:"files"`
-		Secrets nodeFiles    `json:"secrets"`
+		Files   NodeFiles    `json:"files"`
+		Secrets NodeFiles    `json:"secrets"`
 	}
-	projectsJSON map[ProjectName]projectJSON
+	ProjectsJSON map[ProjectName]projectJSON
 	ConfigJSON   struct { // TODO: better name
-		Projects projectsJSON `json:"projects"`
+		Projects ProjectsJSON `json:"projects"`
 		Nodes    NodeConfigs  `json:"nodes"`
 	}
 	DropinName struct {
@@ -289,11 +274,12 @@ func newProjectConfig(conf projectJSON) (*ProjectConfig, error) {
 	}, nil
 }
 
-func getChecksums(name ProjectName, version Version) (map[string]string, error) {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", name, version)
+// getChecksums returns the checksums for the project.
+func getChecksums(pv ProjectVersion) (map[string]string, error) {
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", pv.Name, pv.Version)
 	checksumData, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", name, version, err)
+		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", pv.Name, pv.Version, err)
 	}
 	checksums := map[string]string{}
 	for _, line := range strings.Split(string(checksumData), "\n") {
@@ -309,96 +295,50 @@ func getChecksums(name ProjectName, version Version) (map[string]string, error) 
 	return checksums, nil
 }
 
-// loadFiles returns the non-systemd files for the project.
-// FIXMEH: remove
-func (p *Project) loadFiles(arch, sshash string, files []nodeFile) error {
-	checksums, err := getChecksums(p.Name, p.Version)
-	if err != nil {
-		return err
-	}
-
-	binaries := make([]binary, len(files), len(files))
-	for i, file := range files {
-		key := file.ChecksumKey
-		if key == "" {
-			key = file.Name
-		}
-		checksum, exists := checksums[key]
-		if !exists {
-			return fmt.Errorf("missing checksum %q in %s", key, checksums)
-		}
-		binaries[i] = binary{
-			url:      fmt.Sprintf("https://github.com/hkjn/%s/releases/download/%s/%s", p.Name, p.Version, file.Name),
-			checksum: checksum,
-			path:     file.Path,
-		}
-	}
-	p.binaries = binaries
-	return nil
-}
-
-// load loads the project's systemd units and binaries.
-func (p *Project) load(sshash, arch string, conf ProjectConfigs) error {
-	pc, exists := conf.configs[p.Name]
-	if !exists {
-		return fmt.Errorf("bug: missing project configs for project %q", p.Name)
-	}
-	p.secretServiceDomain = conf.secretServiceDomain
-	p.secretFiles = pc.secretFiles
-	fmt.Printf("FIXMEH: in Project.Load(), secretFiles=%v\n", p.secretFiles)
-	p.units = pc.units
-	return p.loadFiles(arch, sshash, pc.files)
-}
-
 // GetChecksumURL returns the URL to fetch the checksums for the project.
-func (p Project) GetChecksumURL() string {
+func GetChecksumURL(pv ProjectVersion) string {
 	return fmt.Sprintf(
 		"https://github.com/hkjn/%s/releases/download/%s/SHA512SUMS",
-		p.Name,
-		p.Version,
+		pv.Name,
+		pv.Version,
 	)
 }
 
-// GetSecretURLs returns the URLs for any secrets in the project.
-func (p Project) GetSecretURLs(sshash, secretServiceDomain string) []string {
-	fmt.Printf("FIXMEH: secretFiles=%v\n", p.secretFiles)
-	results := make([]string, len(p.secretFiles), len(p.secretFiles))
-	for i, secret := range p.secretFiles {
-		results[i] = fmt.Sprintf("https://%s/%s/files/%s/%s/certs/%s", secretServiceDomain, sshash, p.Name, p.Version, secret.Name)
+// GetSecrets returns the URLs for any secrets in the project.
+func (conf ProjectsJSON) GetSecrets(projectName ProjectName) (Secrets, error) {
+	p, exists := conf[projectName]
+	if !exists {
+		return nil, fmt.Errorf("no project %q", projectName)
 	}
-	return results
+	result := make(Secrets, len(p.Secrets), len(p.Secrets))
+	for i, s := range p.Secrets {
+		result[i] = Secret(s)
+	}
+	return result, nil // TODO: change type of field
+	//	results := make([]string, len(p.Secrets), len(p.Secrets))
+	//	for i, secret := range p.Secrets {
+	//		results[i] = fmt.Sprintf("https://%s/%s/files/%s/%s/certs/%s", secretServiceDomain, sshash, pv.Name, pv.Version, secret.Name)
+	//	}
+	//	return results
 }
 
-func (ps Projects) getUnits() []systemdUnit {
-	units := []systemdUnit{}
-	for _, p := range ps {
-		units = append(units, p.units...)
-	}
-	return units
-}
-
-func (ps Projects) String() string {
-	names := make([]string, len(ps), len(ps))
-	for i, p := range ps {
-		names[i] = string(p.Name)
-	}
-	return strings.Join(names, ", ")
-}
-
-func (nf nodeFiles) String() string {
+func (nf NodeFiles) String() string {
 	if len(nf) == 0 {
 		return "[empty nodeFile]"
 	}
 	files := make([]string, len(nf), len(nf))
 	for i, f := range nf {
-		files[i] = fmt.Sprintf("nodeFile{Name: %s, ChecksumKey: %s, Path: %s}}", f.Name, f.ChecksumKey, f.Path)
+		files[i] = fmt.Sprintf("NodeFile{Name: %s, ChecksumKey: %s, Path: %s}}", f.Name, f.ChecksumKey, f.Path)
 	}
 	return strings.Join(files, ", ")
 }
 
+func (s Secret) GetURL(secretServiceDomain, sshash string, pv ProjectVersion) string {
+	return fmt.Sprintf("https://%s/%s/files/%s/%s/certs/%s", secretServiceDomain, sshash, pv.Name, pv.Version, s.Name)
+}
+
 func (nc NodeConfig) String() string {
 	return fmt.Sprintf(fmt.Sprintf("NodeConfig{Arch: %s}", nc.Arch))
-	// return fmt.Sprintf(fmt.Sprintf("NodeConfig{Arch: %s, Projects: %s}", nc.Arch, nc.Projects.String()))
 }
 
 func (p projectJSON) String() string {
@@ -408,18 +348,24 @@ func (p projectJSON) String() string {
 	)
 }
 
+//func (conf projectsJSON) GetSecretURLs(pv ProjectVersion, sshash, basedomain string) ([]string, error) {
+//	p, exists := conf[pv.Name]
+//	if !exists {
+//		return []string{}, fmt.Errorf("no such project %q", pv.Name)
+//	}
+//	return p.GetSecretURLs(pv, sshash, basedomain), nil
+//}
+
 // getBinaries returns the binaries for the specific project.
-// FIXMEH
-func (conf projectsJSON) getBinaries(pversions []ProjectVersion) ([]binary, error) {
+func (conf ProjectsJSON) getBinaries(pversions []ProjectVersion) ([]binary, error) {
 	result := []binary{}
-	for _, p := range pversions {
-		fmt.Printf("FIXMEH: should load binaries for project %q version %v\n", p.Name, p.Version)
-		pc, exists := conf[p.Name]
+	for _, pv := range pversions {
+		pc, exists := conf[pv.Name]
 		if !exists {
-			return nil, fmt.Errorf("bug: no such project %q", p.Name)
+			return nil, fmt.Errorf("bug: no such project %q", pv.Name)
 		}
 
-		bins, err := pc.getBinaries(p.Name, p.Version)
+		bins, err := pc.getBinaries(pv)
 		if err != nil {
 			return nil, err
 		}
@@ -429,10 +375,10 @@ func (conf projectsJSON) getBinaries(pversions []ProjectVersion) ([]binary, erro
 }
 
 // getBinaries returns the binaries.
-func (conf projectJSON) getBinaries(projectName ProjectName, projectVersion Version) ([]binary, error) {
+func (conf projectJSON) getBinaries(pv ProjectVersion) ([]binary, error) {
 	// TODO: Find better place to load checksums to avoid loading same ones over
 	// and over.
-	checksums, err := getChecksums(projectName, projectVersion)
+	checksums, err := getChecksums(pv)
 	if err != nil {
 		return nil, err
 	}
@@ -450,8 +396,8 @@ func (conf projectJSON) getBinaries(projectName ProjectName, projectVersion Vers
 		result = append(result, binary{
 			url: fmt.Sprintf(
 				"https://github.com/hkjn/%s/releases/download/%s/%s",
-				projectName,
-				projectVersion,
+				pv.Name,
+				pv.Version,
 				file.Name,
 			),
 			checksum: checksum,
@@ -462,7 +408,7 @@ func (conf projectJSON) getBinaries(projectName ProjectName, projectVersion Vers
 }
 
 // getUnits returns the systemd units for the specific projects.
-func (conf projectsJSON) getUnits(pversions []ProjectVersion) ([]systemdUnit, error) {
+func (conf ProjectsJSON) getUnits(pversions []ProjectVersion) ([]systemdUnit, error) {
 	result := []systemdUnit{}
 	for _, p := range pversions {
 		pc, exists := conf[p.Name]
@@ -479,8 +425,8 @@ func (conf projectsJSON) getUnits(pversions []ProjectVersion) ([]systemdUnit, er
 	return result, nil
 }
 
+// CreateNodes returns nodes created from the configs.
 func (conf ConfigJSON) CreateNodes() (nodes, error) {
-	// createNodes returns nodes created from the configs.
 	result := nodes{}
 	for name, nc := range conf.Nodes {
 		log.Printf("Generating config for node %q..\n", name)
