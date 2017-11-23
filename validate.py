@@ -1,3 +1,9 @@
+#
+# TODO: use "download binaries and verify checksums"
+# logic here to fetch" CA cert, client cert + key,
+# and then call telemetry/install_client:
+#   curl -o /etc/ssl/mon_ca.pem https://admin1.hkjn.me/151f[...]/files/hkjninfra/1.5.5/certs/mon_ca.pem
+#
 import json
 import logging
 import os
@@ -52,6 +58,7 @@ def run():
             print('  Checksum matches!')
     if not dryrun:
         print('All checksums matched.')
+
 
 if __name__ == '__main__':
     run()
