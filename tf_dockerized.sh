@@ -18,11 +18,12 @@ generate_ignite_configs() {
 	           -v /etc/secrets/secretservice:/etc/secrets/secretservice:ro \
 	           -v $(pwd):/home/go/src/hkjn.me/hkjninfra \
 	           -w /home/go/src/hkjn.me/hkjninfra \
-	       hkjn/golang go run ignite.go
+	       hkjn/golang go run generate_ignite_configs.go
 }
 
 fetch_checksums() {
 	docker run --rm -it \
+	           -v /etc/secrets/secretservice:/etc/secrets/secretservice:ro \
 	           -v $(pwd):/home/go/src/hkjn.me/hkjninfra \
 	           -w /home/go/src/hkjn.me/hkjninfra \
 	       hkjn/golang go run fetch_checksums.go

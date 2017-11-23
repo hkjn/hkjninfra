@@ -1,4 +1,4 @@
-// Package ignite ...
+// Package ignite deals with Ignite JSON configs.
 package ignite
 
 import (
@@ -59,7 +59,7 @@ type (
 	binary struct {
 		// url to fetch binary from, e.g. "https://github.com/hkjn/hkjninfra/releases/download/1.1.7/tserver_x86_64"
 		url string
-		// checksum of the file, e.g. "sha512-123cec939d7c03c239ee6040185ccb8b74d5d875764479444448ca2ea31d25f364a891363a5850fba2564ce238c7548b3677d713ce69ed7caf421950cd3cd5c6"
+		// checksum of the file, e.g. "sha512-123[...]"
 		checksum string
 		// path on the remote node for the binary, e.g. "/opt/bin/tserver"
 		path string
@@ -78,53 +78,56 @@ type (
 		systemdUnits []systemdUnit
 	}
 
-	nodes       map[nodeName]node
-	ProjectName string
-	// Project is something that a node should run
-	Project struct {
+	nodes          map[nodeName]node
+	ProjectName    string
+	ProjectVersion struct {
 		// name is the name of a project the node should run node, e.g. "hkjninfra"
 		Name ProjectName `json:"name"`
 		// version is the version of the project that should run on the node, e.g. "1.0.1"
 		Version Version `json:"version"`
-		// units are the systemd units for the project
-		units []systemdUnit
-		// binaries are the binaries needed for the project
-		binaries []binary
 	}
 	ProjectConfig struct {
-		units []systemdUnit
-		files []NodeFile
+		units       []systemdUnit
+		files       []NodeFile
+		secretFiles NodeFiles
 	}
-	ProjectConfigs map[ProjectName]ProjectConfig
-	// Projects is a list of projects that a node should run
-	Projects []Project
+	ProjectConfigs struct {
+		secretServiceDomain string
+		configs             map[ProjectName]ProjectConfig
+	}
 	// NodeConfig is the configuration of a single node
 	NodeConfig struct {
 		// sshash is the secretservice hash to use
 		sshash string
-		// projects is all the projects the node should run
-		Projects Projects `json:"projects"`
+		// projectVersions is the names of all the projects the node should run
+		ProjectVersions []ProjectVersion `json:"projects"`
 		// arch is the CPU architecture the node runs, e.g. "x86_64"
 		Arch string `json:"arch"`
 	}
 	// NodeConfigs is the configuration of all nodes
 	NodeConfigs map[nodeName]NodeConfig
-	DropinName  struct {
-		Unit, Dropin string
-	}
-	NodeFile struct {
-		Name, ChecksumKey, Path string
-		GetUrl                  func(Version) string
-	}
-	// projectFiles represents the files to include for a project.
-	ProjectFiles struct {
-		// units are the names of the systemd units for the project
-		UnitNames []string
-		// dropins are the names of the systemd units and overrides for the project
-		DropinNames []DropinName
 
-		// files are the non-systemd files for the project
-		Files []NodeFile
+	NodeFile struct {
+		Path        string `json:"path"`
+		Name        string `json:"name"`
+		ChecksumKey string `json:"checksum_key"`
+	}
+	NodeFiles   []NodeFile
+	Secret      NodeFile
+	Secrets     []Secret
+	projectJSON struct {
+		Units   []string     `json:"units"`
+		Dropins []DropinName `json:"dropins"`
+		Files   NodeFiles    `json:"files"`
+		Secrets NodeFiles    `json:"secrets"`
+	}
+	ProjectsJSON map[ProjectName]projectJSON
+	ConfigJSON   struct { // TODO: better name
+		Projects ProjectsJSON `json:"projects"`
+		Nodes    NodeConfigs  `json:"nodes"`
+	}
+	DropinName struct {
+		Unit, Dropin string
 	}
 )
 
@@ -156,6 +159,7 @@ func newSystemdUnit(unitFile string) (*systemdUnit, error) {
 	}, nil
 }
 
+// Load returns the systemd units.
 func (dn DropinName) Load() (*systemdUnit, error) {
 	b, err := ioutil.ReadFile(fmt.Sprintf("units/%s", dn.Dropin))
 	if err != nil {
@@ -246,12 +250,36 @@ func newIgnitionConfig() ignitionConfig {
 	}
 }
 
-// loadFiles returns the non-systemd files for the project.
-func (p *Project) loadFiles(arch, sshash string, files []NodeFile) error {
-	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", p.Name, p.Version)
+// newProjectConfig returns the project config.
+func newProjectConfig(conf projectJSON) (*ProjectConfig, error) {
+	units := []systemdUnit{}
+	for _, unitFile := range conf.Units {
+		unit, err := newSystemdUnit(unitFile)
+		if err != nil {
+			return nil, err
+		}
+		units = append(units, *unit)
+	}
+	for _, d := range conf.Dropins {
+		dropin, err := d.Load()
+		if err != nil {
+			return nil, err
+		}
+		units = append(units, *dropin)
+	}
+	return &ProjectConfig{
+		units:       units,
+		files:       conf.Files,
+		secretFiles: conf.Secrets,
+	}, nil
+}
+
+// getChecksums returns the checksums for the project.
+func getChecksums(pv ProjectVersion) (map[string]string, error) {
+	checksumFile := fmt.Sprintf("checksums/%s_%s.sha512", pv.Name, pv.Version)
 	checksumData, err := ioutil.ReadFile(checksumFile)
 	if err != nil {
-		return fmt.Errorf("unable to read checksums for %q version %q: %v", p.Name, p.Version, err)
+		return nil, fmt.Errorf("unable to read checksums for %q version %q: %v", pv.Name, pv.Version, err)
 	}
 	checksums := map[string]string{}
 	for _, line := range strings.Split(string(checksumData), "\n") {
@@ -260,149 +288,183 @@ func (p *Project) loadFiles(arch, sshash string, files []NodeFile) error {
 		}
 		parts := strings.Fields(line)
 		if len(parts) != 2 {
-			return fmt.Errorf("invalid line in checksum file %s: %q", checksumFile, line)
+			return nil, fmt.Errorf("invalid line in checksum file %s: %q", checksumFile, line)
 		}
 		checksums[parts[1]] = parts[0]
 	}
-	binaries := make([]binary, len(files), len(files))
-	for i, file := range files {
+	return checksums, nil
+}
+
+// GetChecksumURL returns the URL to fetch the checksums for the project.
+func GetChecksumURL(pv ProjectVersion) string {
+	return fmt.Sprintf(
+		"https://github.com/hkjn/%s/releases/download/%s/SHA512SUMS",
+		pv.Name,
+		pv.Version,
+	)
+}
+
+// GetSecrets returns the URLs for any secrets in the project.
+func (conf ProjectsJSON) GetSecrets(projectName ProjectName) (Secrets, error) {
+	p, exists := conf[projectName]
+	if !exists {
+		return nil, fmt.Errorf("no project %q", projectName)
+	}
+	result := make(Secrets, len(p.Secrets), len(p.Secrets))
+	for i, s := range p.Secrets {
+		result[i] = Secret(s)
+	}
+	return result, nil // TODO: change type of field
+	//	results := make([]string, len(p.Secrets), len(p.Secrets))
+	//	for i, secret := range p.Secrets {
+	//		results[i] = fmt.Sprintf("https://%s/%s/files/%s/%s/certs/%s", secretServiceDomain, sshash, pv.Name, pv.Version, secret.Name)
+	//	}
+	//	return results
+}
+
+func (nf NodeFiles) String() string {
+	if len(nf) == 0 {
+		return "[empty nodeFile]"
+	}
+	files := make([]string, len(nf), len(nf))
+	for i, f := range nf {
+		files[i] = fmt.Sprintf("NodeFile{Name: %s, ChecksumKey: %s, Path: %s}}", f.Name, f.ChecksumKey, f.Path)
+	}
+	return strings.Join(files, ", ")
+}
+
+func (s Secret) GetURL(secretServiceDomain, sshash string, pv ProjectVersion) string {
+	return fmt.Sprintf("https://%s/%s/files/%s/%s/certs/%s", secretServiceDomain, sshash, pv.Name, pv.Version, s.Name)
+}
+
+func (nc NodeConfig) String() string {
+	return fmt.Sprintf(fmt.Sprintf("NodeConfig{Arch: %s}", nc.Arch))
+}
+
+func (p projectJSON) String() string {
+	return fmt.Sprintf("projectJSON{Units: %s, Secrets: %s,..}",
+		strings.Join(p.Units, ", "),
+		p.Secrets.String(),
+	)
+}
+
+//func (conf projectsJSON) GetSecretURLs(pv ProjectVersion, sshash, basedomain string) ([]string, error) {
+//	p, exists := conf[pv.Name]
+//	if !exists {
+//		return []string{}, fmt.Errorf("no such project %q", pv.Name)
+//	}
+//	return p.GetSecretURLs(pv, sshash, basedomain), nil
+//}
+
+// getBinaries returns the binaries for the specific project.
+func (conf ProjectsJSON) getBinaries(pversions []ProjectVersion) ([]binary, error) {
+	result := []binary{}
+	for _, pv := range pversions {
+		pc, exists := conf[pv.Name]
+		if !exists {
+			return nil, fmt.Errorf("bug: no such project %q", pv.Name)
+		}
+
+		bins, err := pc.getBinaries(pv)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, bins...)
+	}
+	return result, nil
+}
+
+// getBinaries returns the binaries.
+func (conf projectJSON) getBinaries(pv ProjectVersion) ([]binary, error) {
+	// TODO: Find better place to load checksums to avoid loading same ones over
+	// and over.
+	checksums, err := getChecksums(pv)
+	if err != nil {
+		return nil, err
+	}
+
+	result := []binary{}
+	for _, file := range conf.Files {
 		key := file.ChecksumKey
 		if key == "" {
 			key = file.Name
 		}
 		checksum, exists := checksums[key]
 		if !exists {
-			return fmt.Errorf("missing checksum %q in %s", key, checksumFile)
+			return nil, fmt.Errorf("missing checksum for key %q; all checksums %v", key, checksums)
 		}
-		binaries[i] = binary{
-			url:      file.GetUrl(p.Version),
+		result = append(result, binary{
+			url: fmt.Sprintf(
+				"https://github.com/hkjn/%s/releases/download/%s/%s",
+				pv.Name,
+				pv.Version,
+				file.Name,
+			),
 			checksum: checksum,
 			path:     file.Path,
-		}
+		})
 	}
-	p.binaries = binaries
-	return nil
+	return result, nil
 }
 
-// loadUnits returns the systemd units for the project.
-func (pf ProjectFiles) loadUnits() ([]systemdUnit, error) {
-	units := []systemdUnit{}
-	for _, unitFile := range pf.UnitNames {
-		unit, err := newSystemdUnit(unitFile)
+// getUnits returns the systemd units for the specific projects.
+func (conf ProjectsJSON) getUnits(pversions []ProjectVersion) ([]systemdUnit, error) {
+	result := []systemdUnit{}
+	for _, p := range pversions {
+		pc, exists := conf[p.Name]
+		if !exists {
+			return nil, fmt.Errorf("bug: no such project %q", p.Name)
+		}
+		pconf, err := newProjectConfig(pc)
 		if err != nil {
 			return nil, err
 		}
-		units = append(units, *unit)
+		// p.Version
+		result = append(result, pconf.units...)
 	}
-	for _, d := range pf.DropinNames {
-		dropin, err := d.Load()
-		if err != nil {
-			return nil, err
-		}
-		units = append(units, *dropin)
-	}
-	return units, nil
+	return result, nil
 }
 
-// GetURL returns the URL to fetch the checksums for the project.
-func (p Project) GetChecksumURL() string {
-	return fmt.Sprintf(
-		"https://github.com/hkjn/%s/releases/download/%s/SHA512SUMS",
-		p.Name,
-		p.Version,
-	)
-}
-
-func (ps Projects) getBinaries() []binary {
-	bins := []binary{}
-	for _, p := range ps {
-		bins = append(bins, p.binaries...)
-	}
-	return bins
-}
-
-func (ps Projects) getUnits() []systemdUnit {
-	units := []systemdUnit{}
-	for _, p := range ps {
-		units = append(units, p.units...)
-	}
-	return units
-}
-
-// createNodes returns nodes created from the configs.
-func (nc NodeConfigs) CreateNodes() nodes {
+// CreateNodes returns nodes created from the configs.
+func (conf ConfigJSON) CreateNodes() (nodes, error) {
 	result := nodes{}
-	for name, conf := range nc {
+	for name, nc := range conf.Nodes {
 		log.Printf("Generating config for node %q..\n", name)
+		bins, err := conf.Projects.getBinaries(nc.ProjectVersions)
+		if err != nil {
+			return nil, err
+		}
+		units, err := conf.Projects.getUnits(nc.ProjectVersions)
+		if err != nil {
+			return nil, err
+		}
 		result[name] = node{
 			name:         name,
-			binaries:     conf.Projects.getBinaries(),
-			systemdUnits: conf.Projects.getUnits(),
+			binaries:     bins,
+			systemdUnits: units,
 		}
 	}
-	return result
+	return result, nil
 }
 
-// GetProjectConfigs returns the project configs, given files to load.
-func GetProjectConfigs(pfs map[ProjectName]ProjectFiles) (*ProjectConfigs, error) {
-	conf := ProjectConfigs{}
-	for name, pfs := range pfs {
-		units, err := pfs.loadUnits()
-		if err != nil {
-			return nil, err
-		}
-		conf[name] = ProjectConfig{
-			units: units,
-			files: pfs.Files,
-		}
-	}
-	return &conf, nil
-}
-
-// load loads the project's systemd units and binaries.
-func (p *Project) Load(sshash, arch string, conf ProjectConfig) error {
-	p.units = conf.units
-	return p.loadFiles(arch, sshash, conf.files)
-}
-
-// loadProjects loads the systemd units and binaries for the node config.
-func (nc *NodeConfig) loadProjects(projectConf ProjectConfigs) error {
-	projects := make([]Project, len(nc.Projects), len(nc.Projects))
-	for i, p := range nc.Projects {
-		p := p
-		pc, exists := projectConf[p.Name]
-		if !exists {
-			return fmt.Errorf("bug: missing projectConfig for project %q", p.Name)
-		}
-		if err := p.Load(nc.sshash, nc.Arch, pc); err != nil {
-			return err
-		}
-		projects[i] = p
-	}
-	nc.Projects = projects
-	return nil
-}
-
-// load loads the systemd units and binaries for each project in the node configs.
-func (nc NodeConfigs) Load(pc ProjectConfigs) error {
-	for name, conf := range nc {
-		conf := conf
-		log.Printf("Loading projects for node %q..\n", name)
-		if err := conf.loadProjects(pc); err != nil {
-			return err
-		}
-		nc[name] = conf
-	}
-	return nil
-}
-
-// ReadNodeConfigs returns the node configs, read from disk.
-func ReadNodeConfigs() (NodeConfigs, error) {
-	conf := NodeConfigs{}
-	f, err := os.Open("nodes.json")
+// ReadConfig returns the node/project configs, read from disk.
+func ReadConfig() (*ConfigJSON, error) {
+	conf := ConfigJSON{}
+	f, err := os.Open("config.json")
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
-	return conf, json.NewDecoder(f).Decode(&conf)
+	if err := json.NewDecoder(f).Decode(&conf); err != nil {
+		return nil, err
+	}
+	pconfs := map[ProjectName]ProjectConfig{}
+	for name, pconf := range conf.Projects {
+		pc, err := newProjectConfig(pconf)
+		if err != nil {
+			return nil, err
+		}
+		pconfs[name] = *pc
+	}
+	return &conf, nil
 }

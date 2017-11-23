@@ -109,7 +109,7 @@ resource "google_dns_record_set" "hkjn_builder" {
   count = "${var.builder_enabled ? 1 : 0}"
   name = "builder.${google_dns_managed_zone.hkjn_zone.dns_name}"
   type = "A"
-  ttl  = 300
+  ttl  = 100
   managed_zone = "${google_dns_managed_zone.hkjn_zone.name}"
   rrdatas = [
     "${google_compute_instance.builder.network_interface.0.access_config.0.assigned_nat_ip}",

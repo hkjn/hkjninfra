@@ -1,3 +1,5 @@
+# This tool looks at bootstrap/ .json configs to verify that the specified URLs
+# can be fetched and have matching checksums.
 #
 # TODO: use "download binaries and verify checksums"
 # logic here to fetch" CA cert, client cert + key,
@@ -33,7 +35,6 @@ def verify_digest(path, digest):
                 shaparts[0][:5],
                 digest[:5],
             ))
-
 
 def run():
     if len(sys.argv) != 2:
