@@ -106,6 +106,7 @@ create_release
 
 upload mon_ca.pem ${URL}
 
+rm -f SHA512SUMS
 cd telemetry/
 upload tclient_x86_64 ${URL}
 upload tserver_x86_64 ${URL}
@@ -117,6 +118,7 @@ cat SHA512SUMS > ../SHA512SUMS
 cd ../secretservice
 upload secretservice ${URL}
 cat SHA512SUMS >> ../SHA512SUMS
+cd ../
 upload SHA512SUMS ${URL}
 
 slacksend "Released \`${PROJECT}\` v${VERSION}: ${LINK_URL}/${VERSION}"
