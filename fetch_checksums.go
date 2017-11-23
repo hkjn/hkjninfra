@@ -38,13 +38,13 @@ func checksumSecret(url, checksumfile, secretfile string) error {
 	}
 	digest := sha512.Sum512(b)
 
-	f, err := os.OpenFile(checksumfile, os.O_RDWR|os.O_CREATE, 0755)
+	f, err := os.OpenFile(checksumfile, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
 	defer checkClose(f, &err)
-	log.Printf("Appending checksum %x to %q..\n", digest, checksumfile)
-	line := fmt.Sprintf("%x  %s", digest, secretfile)
+	log.Printf("Appending checksum %x[..] to %q..\n", digest[:5], checksumfile)
+	line := fmt.Sprintf("%x  %s\n", digest, secretfile)
 	if _, err := f.Write([]byte(line)); err != nil {
 		return err
 	}
@@ -104,7 +104,7 @@ func downloadChecksums(conf ignite.ConfigJSON, sshash string) error {
 			for _, secret := range secrets {
 				url := secret.GetURL(secretservice.BaseDomain, sshash, pv)
 				if !fetched[url] {
-					log.Printf("Fetching and checksumming secret %q from %q..\n", secret.Name, url)
+					log.Printf("Fetching and checksumming secret %q..\n", secret.Name)
 					if err := checksumSecret(url, filename, secret.Name); err != nil {
 						return err
 					}
