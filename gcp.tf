@@ -156,7 +156,7 @@ resource "google_compute_instance" "blockpress_me" {
     access_config {} # Ephemeral IP
   }
   metadata {
-    sshKeys = "core:${var.zg0_pubkey}"
+    sshKeys = "core:${var.admin1_blockpress_me_pubkey}"
   }
 }
 
