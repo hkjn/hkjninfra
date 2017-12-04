@@ -8,6 +8,7 @@ resource "digitalocean_ssh_key" "digitalocean1_id_rsa" {
 }
 
 resource "digitalocean_volume" "dropcore_disk0" {
+  count = "${var.dropcore_enabled ? 1 : 0}"
   region      = "fra1"
   name        = "dropcore-disk0"
   size        = 170
