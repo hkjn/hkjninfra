@@ -73,6 +73,15 @@ resource "google_compute_disk" "zdisk1" {
 }
 
 #
+# admin2.hkjn.me persistent disk
+#
+resource "google_compute_disk" "admin2-disk" {
+  name  = "admin2-disk"
+  type  = "pd-ssd"
+  zone  = "europe-west3-b"
+  size  = "20"
+}
+
 # GCP instances
 #
 # TODO: Set sshd port in bootstrap:
@@ -80,6 +89,29 @@ resource "google_compute_disk" "zdisk1" {
 # [Socket]
 # ListenStream=
 # ListenStream=6200
+
+resource "google_compute_instance" "admin2" {
+  count = 1
+  name         = "admin2"
+  description  = "admin2.hkjn.me server"
+  machine_type = "f1-micro"
+  zone         = "europe-west3-b"
+  tags = ["dev", "http"]
+  disk {
+    image = "${var.ubuntu_image}"
+  }
+  attached_disk {
+    source = "${google_compute_disk.admin2-disk.self_link}"
+  }
+  network_interface {
+    network = "${google_compute_network.default.name}"
+    access_config {} # Ephemeral IP
+  }
+  metadata {
+    sshKeys = "core:${var.admin2_pubkey}"
+    version = "${var.version}"
+  }
+}
 
 resource "google_compute_instance" "decenter-world" {
   count = 1

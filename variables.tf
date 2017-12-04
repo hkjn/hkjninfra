@@ -76,6 +76,14 @@ variable "coreos_beta_image" {
   default = "coreos-beta-1492-6-0-v20170906"
 }
 
+#
+# The latest image can be found with:
+# $ gcloud compute images list | grep ubuntu
+#
+variable "ubuntu_image" {
+  default = "ubuntu-1710-artful-v20171122"
+}
+
 variable "admin0_ip" {
   default = "35.195.244.206"
 }
