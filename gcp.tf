@@ -29,7 +29,7 @@ resource "google_compute_firewall" "allow_ssh" {
     ports    = ["60000-60100"]
   }
   source_ranges = ["0.0.0.0/0"]
-  target_tags = ["dev"]
+  target_tags = ["ssh"]
 }
 
 resource "google_compute_firewall" "http" {
@@ -96,7 +96,7 @@ resource "google_compute_instance" "admin2" {
   description  = "admin2.hkjn.me server"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
-  tags = ["dev", "http"]
+  tags = ["ssh", "http"]
   disk {
     image = "${var.ubuntu_image}"
   }
@@ -119,7 +119,7 @@ resource "google_compute_instance" "decenter-world" {
   description  = "decenter.world server"
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
-  tags = ["dev", "http"]
+  tags = ["ssh", "http"]
   disk {
     image = "${var.coreos_alpha_image}"
   }
@@ -143,7 +143,7 @@ resource "google_compute_instance" "builder" {
   description  = "Temporary builder server."
   machine_type = "n1-standard-8"
   zone         = "europe-west3-b"
-  tags         = ["dev", "http"]
+  tags         = ["ssh", "http"]
   disk {
     image = "${var.coreos_alpha_image}"
   }
@@ -164,7 +164,7 @@ resource "google_compute_instance" "guac" {
   description  = "The server for guac.hkjn.me."
   machine_type = "f1-micro"
   zone         = "europe-west3-a"
-  tags = ["dev", "http"]
+  tags = ["ssh", "http"]
   disk { image = "${var.coreos_alpha_image}" }
   network_interface {
     network = "${google_compute_network.default.name}"
@@ -181,7 +181,7 @@ resource "google_compute_instance" "blockpress_me" {
   description  = "The server for blockpress.me."
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
-  tags = ["dev", "http"]
+  tags = ["ssh", "http"]
   disk { image = "${var.coreos_alpha_image}" }
   network_interface {
     network = "${google_compute_network.default.name}"
@@ -198,7 +198,7 @@ resource "google_compute_instance" "elentari-world" {
   description  = "The server for elentari.world."
   machine_type = "f1-micro"
   zone         = "europe-west3-b"
-  tags = ["dev", "http"]
+  tags = ["ssh", "http"]
   disk { image = "${var.coreos_alpha_image}" }
   network_interface {
     network = "${google_compute_network.default.name}"
